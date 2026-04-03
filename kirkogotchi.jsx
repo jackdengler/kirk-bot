@@ -706,29 +706,39 @@ function DearLib({ data, fs }) {
   );
 }
 
-// ═══ MINI GAME: DEBATE ME COWARD ═══
-const DEBATE_ARGS = [
-  "healthcare?", "climate!", "pronouns!", "tax the rich", "actually...",
-  "source?", "cope", "ratio", "free college", "inequality!",
-  "empathy!", "science!", "diversity!", "workers rights", "regulate!",
-  "fact check!", "nuance!", "context!", "privilege!", "universal basic",
-  "peer reviewed", "systemic!", "intersect!", "solidarity!", "mutual aid",
-  "read theory", "late stage", "living wage", "eat the rich", "praxis!",
-  "rent control", "unions!", "abolish!", "defund!", "redistribute",
-  "ACAB!", "gentrified", "billionaires", "boot licker", "comrade!",
+// ═══ MINI GAME: SPOT THE SNIPER ═══
+// POV from stage at UVU. Buildings with rooftops. Snipers appear as glints.
+// Tap them before they shoot. Dark humor tribute.
+
+const BUILDINGS = [
+  { x: 5, w: 35, h: 55, floors: 3, color: "#8a7a6a" },
+  { x: 45, w: 30, h: 70, floors: 4, color: "#7a6a5a" },
+  { x: 80, w: 25, h: 45, floors: 2, color: "#9a8a7a" },
+  { x: 110, w: 40, h: 60, floors: 3, color: "#6a6a6a" },
+  { x: 155, w: 30, h: 50, floors: 3, color: "#8a7a6a" },
 ];
 
-function DebateGame({ onDone, name, faceSize, gender }) {
-  const [bubbles, setBubbles] = useState([]);
-  const [sc, setSc] = useState(0);
-  const [misses, setMisses] = useState(0);
-  const [t, setT] = useState(15);
+// Sniper spawn positions — rooftop edges
+const SNIPER_SPOTS = [
+  { x: 15, y: 42 }, { x: 30, y: 42 }, // building 1 roof
+  { x: 52, y: 27 }, { x: 68, y: 27 }, // building 2 roof
+  { x: 88, y: 52 }, { x: 100, y: 52 }, // building 3 roof
+  { x: 120, y: 37 }, { x: 140, y: 37 }, // building 4 roof
+  { x: 162, y: 47 }, { x: 178, y: 47 }, // building 5 roof
+];
+
+function SniperGame({ onDone }) {
+  const [snipers, setSnipers] = useState([]);
+  const [score, setScore] = useState(0);
+  const [hits, setHits] = useState(0); // times you got shot
+  const [t, setT] = useState(20);
   const [fx, setFx] = useState([]);
-  const [shakeKirk, setShakeKirk] = useState(false);
-  const [hitFlash, setHitFlash] = useState(false);
+  const [shotFlash, setShotFlash] = useState(false);
+  const [muzzleFlash, setMuzzleFlash] = useState(null);
   const fc = useRef(0);
   const done = useRef(false);
 
+  // Countdown
   useEffect(() => {
     const iv = setInterval(() => {
       setT(p => { if (p <= 1) { clearInterval(iv); return 0; } return p - 1; });
@@ -736,102 +746,189 @@ function DebateGame({ onDone, name, faceSize, gender }) {
     return () => clearInterval(iv);
   }, []);
 
+  // End game
   useEffect(() => {
     if (t === 0 && !done.current) {
       done.current = true;
-      setTimeout(() => onDone(sc, misses), 800);
+      setTimeout(() => onDone(score, hits), 1200);
     }
-  }, [t, sc, misses, onDone]);
+  }, [t, score, hits, onDone]);
 
+  // Game loop — spawn snipers, handle shooting
   useEffect(() => {
     const iv = setInterval(() => {
       fc.current++;
-      // Spawn bubbles — smooth difficulty ramp
-      const elapsed = 15 - t;
-      const spawnRate = Math.max(2, 7 - Math.floor(elapsed / 3));
-      if (fc.current % spawnRate === 0) {
-        const arg = DEBATE_ARGS[Math.floor(Math.random() * DEBATE_ARGS.length)];
-        setBubbles(p => [...p, {
-          id: Math.random(),
-          x: 198,
-          y: 28 + Math.random() * 75,
-          text: arg,
-          speed: 1.2 + Math.random() * 1.2 + elapsed * 0.12,
-        }]);
+      const elapsed = 20 - t;
+
+      // Spawn snipers — ramps up
+      const spawnChance = 0.03 + elapsed * 0.005;
+      if (Math.random() < spawnChance && snipers.length < 4) {
+        const spot = SNIPER_SPOTS[Math.floor(Math.random() * SNIPER_SPOTS.length)];
+        // Don't spawn on occupied spots
+        const occupied = snipers.some(s => Math.abs(s.x - spot.x) < 10 && Math.abs(s.y - spot.y) < 10);
+        if (!occupied) {
+          setSnipers(p => [...p, {
+            id: Math.random(),
+            x: spot.x + (Math.random() - 0.5) * 6,
+            y: spot.y - 2 - Math.random() * 4,
+            timer: 80 - Math.min(elapsed * 2, 40), // frames until they shoot (gets faster)
+            phase: 0, // 0=glint, increases each frame
+          }]);
+        }
       }
-      // Move bubbles
-      setBubbles(p => {
+
+      // Update snipers
+      setSnipers(p => {
         const next = [];
-        p.forEach(b => {
-          const nb = { ...b, x: b.x - b.speed };
-          if (nb.x < 25) {
-            // Hit Kirk!
-            setMisses(m => m + 1);
-            setShakeKirk(true);
-            setHitFlash(true);
-            setTimeout(() => { setShakeKirk(false); setHitFlash(false); }, 150);
+        p.forEach(s => {
+          const ns = { ...s, phase: s.phase + 1 };
+          if (ns.phase >= ns.timer) {
+            // SNIPER SHOOTS — you got hit
+            setHits(h => h + 1);
+            setShotFlash(true);
+            setMuzzleFlash({ x: ns.x, y: ns.y });
+            setTimeout(() => { setShotFlash(false); setMuzzleFlash(null); }, 200);
+            sfxDie();
           } else {
-            next.push(nb);
+            next.push(ns);
           }
         });
         return next;
       });
+
       // Decay FX
       setFx(p => p.map(f => ({ ...f, l: f.l - 1 })).filter(f => f.l > 0));
-    }, 45);
+    }, 50);
     return () => clearInterval(iv);
-  }, [t]);
+  }, [t, snipers]);
 
-  function popBubble(id, x, y) {
-    setBubbles(p => p.filter(b => b.id !== id));
-    setSc(p => p + 1);
-    setFx(f => [...f, { x, y, l: 14 }]);
+  // Tap a sniper
+  function spotSniper(id, x, y) {
+    setSnipers(p => p.filter(s => s.id !== id));
+    setScore(s => s + 1);
+    setFx(f => [...f, { x, y, l: 16, text: "SPOTTED!" }]);
     sfxDebateHit();
   }
 
-  const rating = sc > 12 ? "ABSOLUTELY DESTROYED" : sc > 7 ? "BASED" : sc > 3 ? "MID ENERGY" : "LOW ENERGY";
+  const rating = score > 10 ? "SECRET SERVICE MATERIAL" : score > 6 ? "EAGLE EYE" : score > 3 ? "ALERT" : "SITTING DUCK";
 
   return (
-    <div style={{ background: "#0d2240", borderRadius: 8, overflow: "hidden", touchAction: "none" }}>
-      <svg viewBox="0 0 200 130" style={{ display: "block", width: "100%", transition: "transform 0.05s", transform: shakeKirk ? "translateX(2px)" : "none" }}>
-        <rect width="200" height="130" fill="#dce8f5" />
-        {/* Header */}
-        <rect width="200" height="20" fill="#1a3a6a" />
-        <text x="12" y="14" fontSize="7" fontFamily="'Bangers',cursive" fill="#fff" letterSpacing="1">DEBATE ME, COWARD!</text>
-        <text x="188" y="14" fontSize="8" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="end">{sc}</text>
-        {/* Timer bar */}
-        <rect x="0" y="20" width={200 * t / 15} height="2.5" fill="#c41e3a" />
+    <div style={{ background: "#1a2a3a", overflow: "hidden", touchAction: "none", cursor: "crosshair" }}>
+      <svg viewBox="0 0 200 140" style={{ display: "block", width: "100%", transition: "transform 0.05s", transform: shotFlash ? "translateX(2px)" : "none" }}>
+        {/* Sky gradient */}
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#4a8ac4" />
+            <stop offset="100%" stopColor="#a8c8e8" />
+          </linearGradient>
+        </defs>
+        <rect width="200" height="140" fill="url(#sky)" />
 
-        {/* Hit flash */}
-        {hitFlash && <rect width="200" height="130" fill="#ef444433" />}
-        {/* Kirk at podium */}
-        <g transform={shakeKirk ? "translate(22, 72) rotate(3)" : "translate(22, 72)"}>
-          <rect x={-8} y={10} width={16} height={20} rx={2} fill="#5a3a1a" />
-          <rect x={-10} y={10} width={20} height={3} rx={1} fill="#7a5a3a" />
-          <Kirk stage="adult" mood="angry" faceSize={faceSize} scale={0.32} frame={fc.current % 4} gender={gender} />
-        </g>
+        {/* Mountains in distance */}
+        <path d="M0 80 L30 55 L55 70 L80 50 L110 65 L140 45 L170 60 L200 55 L200 97 L0 97 Z" fill="#6a7a6a88" />
 
-        {/* Bubbles */}
-        {bubbles.map(b => (
-          <g key={b.id} onPointerDown={(e) => { e.preventDefault(); popBubble(b.id, b.x, b.y); }} style={{ cursor: "pointer" }}>
-            <rect x={b.x - 22} y={b.y - 8} width={44} height={16} rx={8} fill="#fff" stroke="#1a3a6a" strokeWidth={0.8} />
-            <text x={b.x} y={b.y + 3} fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#1a3a6a" textAnchor="middle" style={{ pointerEvents: "none" }}>{b.text}</text>
+        {/* Buildings */}
+        {BUILDINGS.map((b, i) => (
+          <g key={i}>
+            <rect x={b.x} y={97 - b.h} width={b.w} height={b.h} fill={b.color} stroke="#5a5a5a" strokeWidth="0.5" />
+            {/* Windows */}
+            {Array.from({ length: b.floors }, (_, f) => (
+              Array.from({ length: Math.floor(b.w / 10) }, (_, wi) => (
+                <rect key={f + "-" + wi} x={b.x + 3 + wi * 10} y={97 - b.h + 5 + f * (b.h / b.floors)} width={6} height={5} rx={0.5}
+                  fill={Math.random() > 0.3 ? "#b8d4e8" : "#e8d898"} opacity={0.7} />
+              ))
+            ))}
+            {/* Rooftop edge */}
+            <rect x={b.x - 1} y={97 - b.h - 2} width={b.w + 2} height={3} fill="#5a5a5a" rx={0.5} />
           </g>
         ))}
 
-        {/* DESTROYED fx */}
-        {fx.map((p, i) => (
-          <text key={i} x={p.x} y={p.y - (14 - p.l) * 2} fontSize="6" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle" opacity={p.l / 14} fontWeight="bold">DESTROYED!</text>
+        {/* Ground / stage area */}
+        <rect x="0" y="97" width="200" height="43" fill="#4a6a4a" />
+        <rect x="0" y="97" width="200" height="2" fill="#3a5a3a" />
+        {/* Stage */}
+        <rect x="60" y="108" width="80" height="8" rx="2" fill="#8a6a4a" />
+        <rect x="55" y="107" width="90" height="3" rx="1" fill="#9a7a5a" />
+        {/* Podium */}
+        <rect x="92" y="100" width="16" height="10" rx="1" fill="#5a3a1a" />
+        <rect x="89" y="99" width="22" height="3" rx="1" fill="#7a5a3a" />
+        {/* TPUSA banner */}
+        <text x="100" y="106" fontSize="3" fontFamily="'Press Start 2P',monospace" fill="#fff" textAnchor="middle">TPUSA</text>
+
+        {/* UVU text on biggest building */}
+        <text x="60" y="40" fontSize="6" fontFamily="'Bangers',cursive" fill="#fff8" textAnchor="middle" letterSpacing="2">UVU</text>
+
+        {/* Snipers — appear as glints, then silhouettes */}
+        {snipers.map(s => {
+          const danger = s.phase / s.timer; // 0 to 1
+          const glintSize = 1 + danger * 2;
+          const visible = s.phase > 5; // brief delay before visible
+          return visible ? (
+            <g key={s.id} onPointerDown={(e) => { e.preventDefault(); spotSniper(s.id, s.x, s.y); }} style={{ cursor: "crosshair" }}>
+              {/* Hitbox — bigger than visual for easier tapping */}
+              <rect x={s.x - 8} y={s.y - 8} width={16} height={16} fill="transparent" />
+              {/* Scope glint */}
+              <circle cx={s.x} cy={s.y} r={glintSize} fill={danger > 0.7 ? "#ff0" : "#fff"} opacity={0.5 + danger * 0.5}>
+                {danger < 0.7 && <animate attributeName="opacity" values="0.3;0.8;0.3" dur="0.6s" repeatCount="indefinite" />}
+              </circle>
+              {/* Silhouette — appears as danger increases */}
+              {danger > 0.3 && (
+                <g opacity={Math.min(1, (danger - 0.3) * 2)}>
+                  <circle cx={s.x} cy={s.y - 3} r={2} fill="#222" />
+                  <rect x={s.x - 1.5} y={s.y - 1} width={3} height={4} fill="#222" />
+                  {/* Rifle */}
+                  <line x1={s.x + 2} y1={s.y} x2={s.x + 7} y2={s.y + 1} stroke="#333" strokeWidth="1" />
+                </g>
+              )}
+              {/* WARNING — when about to shoot */}
+              {danger > 0.8 && (
+                <text x={s.x} y={s.y - 10} fontSize="4" fontFamily="'Bangers',cursive" fill="#ef4444" textAnchor="middle" opacity={fc.current % 4 < 2 ? 1 : 0.3}>⚠️</text>
+              )}
+            </g>
+          ) : null;
+        })}
+
+        {/* Muzzle flash */}
+        {muzzleFlash && (
+          <circle cx={muzzleFlash.x} cy={muzzleFlash.y} r="6" fill="#ff0" opacity="0.8">
+            <animate attributeName="r" from="3" to="8" dur="0.15s" fill="freeze" />
+            <animate attributeName="opacity" from="1" to="0" dur="0.2s" fill="freeze" />
+          </circle>
+        )}
+
+        {/* Shot flash — red overlay */}
+        {shotFlash && <rect width="200" height="140" fill="#ef444444" />}
+
+        {/* Spotted FX */}
+        {fx.map((f, i) => (
+          <g key={i} opacity={f.l / 16}>
+            <text x={f.x} y={f.y - (16 - f.l) * 1.5} fontSize="5" fontFamily="'Bangers',cursive" fill="#22c55e" textAnchor="middle" fontWeight="bold">{f.text}</text>
+            {/* Crosshair */}
+            <circle cx={f.x} cy={f.y} r={3 + (16 - f.l)} fill="none" stroke="#22c55e" strokeWidth="0.5" opacity={f.l / 16} />
+          </g>
         ))}
+
+        {/* HUD */}
+        <rect width="200" height="16" fill="#000a" />
+        <text x="6" y="11" fontSize="5" fontFamily="'Bangers',cursive" fill="#fff" letterSpacing="1">🎯 SPOT THE SNIPER</text>
+        <text x="100" y="11" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">UVU CAMPUS</text>
+        <text x="194" y="11" fontSize="6" fontFamily="'Bangers',cursive" fill="#22c55e" textAnchor="end">{score}</text>
+        {/* Timer bar */}
+        <rect x="0" y="16" width={200 * t / 20} height="2" fill={t < 5 ? "#ef4444" : "#22c55e"} />
+        {/* Hit indicator */}
+        {hits > 0 && (
+          <text x="194" y="136" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#ef4444" textAnchor="end">💀 x{hits}</text>
+        )}
 
         {/* End screen */}
         {t === 0 && (
           <g>
-            <rect x="15" y="30" width="170" height="65" rx="8" fill="#1a3a6aee" />
-            <text x="100" y="52" fontSize="12" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="2">{rating}</text>
-            <text x="100" y="68" fontSize="7" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle">{sc} arguments destroyed</text>
-            <text x="100" y="80" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#fff6" textAnchor="middle">{misses > 0 ? misses + " got through" : "FLAWLESS DEBATE"}</text>
-            <text x="100" y="90" fontSize="5" fontFamily="'Bangers',cursive" fill="#fff4" textAnchor="middle">Curious.</text>
+            <rect x="10" y="25" width="180" height="80" rx="8" fill="#0d2240ee" />
+            <text x="100" y="48" fontSize="10" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="2">{rating}</text>
+            <text x="100" y="64" fontSize="6" fontFamily="'Bangers',cursive" fill="#22c55e" textAnchor="middle">🎯 {score} snipers spotted</text>
+            <text x="100" y="76" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#ef4444" textAnchor="middle">{hits > 0 ? "💀 Hit " + hits + " time" + (hits > 1 ? "s" : "") : "🛡️ UNTOUCHED"}</text>
+            <text x="100" y="92" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#fff4" textAnchor="middle">Protect the podium. Always.</text>
+            <text x="100" y="100" fontSize="3.5" fontFamily="'Press Start 2P',monospace" fill="#fff3" textAnchor="middle">UVU · September 10, 2025</text>
           </g>
         )}
       </svg>
@@ -2056,28 +2153,27 @@ window.Kirkogotchi = function Kirkogotchi() {
   const endRally = useCallback((sc, misses) => {
     setRally(false);
     const perfect = misses === 0;
-    const bonus = perfect ? 10 : 0;
+    const bonus = perfect ? 15 : 0;
     setPet(p => ({
       ...p,
-      happiness: Math.min(100, p.happiness + Math.min(sc * 2.5, 30) + bonus),
-      energy: Math.max(0, p.energy - 6),
-      clout: Math.min(100, p.clout + sc * 2.5 + bonus),
-      hunger: Math.max(0, p.hunger - 3), // Debating is hungry work
+      happiness: Math.min(100, p.happiness + Math.min(sc * 3, 35) + bonus),
+      energy: Math.max(0, p.energy - 5),
+      clout: Math.min(100, p.clout + sc * 3 + bonus),
     }));
     setStats(s => ({
       ...s,
       libsOwned: (s.libsOwned || 0) + sc,
       flawlessDebates: (s.flawlessDebates || 0) + (perfect ? 1 : 0),
     }));
-    addLog("🎤 Debate: " + sc + " destroyed" + (perfect ? " (FLAWLESS)" : ""));
+    addLog("🎯 Protected: " + sc + " snipers spotted" + (perfect ? " (UNTOUCHED)" : " (hit " + misses + "x)"));
     setMsg(
-      perfect ? "🏆 FLAWLESS DEBATE!" :
-      sc > 12 ? "🔥 ABSOLUTELY DESTROYED!" :
-      sc > 7 ? "💪 Based!" :
-      sc > 3 ? "😐 Mid energy..." :
-      "💀 Low energy. Sad!"
+      perfect ? "🛡️ UNTOUCHED! Secret Service material." :
+      sc > 10 ? "🎯 EAGLE EYE!" :
+      sc > 6 ? "🎯 Alert and ready." :
+      sc > 3 ? "😐 Needs more training..." :
+      "💀 Sitting duck."
     );
-    setTimeout(() => setMsg(""), 1500);
+    setTimeout(() => setMsg(""), 2000);
   }, [addLog]);
 
   const createPet = useCallback((name, gender) => {
@@ -2260,7 +2356,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                 <div style={{ position: "absolute", inset: 0, background: timeTint, pointerEvents: "none", zIndex: 1, borderRadius: 7 }} />
               )}
               {rally ? (
-                <DebateGame onDone={endRally} name={pet.name} faceSize={fs} gender={pet.gender} />
+                <SniperGame onDone={endRally} />
               ) : view === "meme" ? (
                 /* Dear Libs overlay — shown briefly when OWN is tapped */
                 <div onClick={() => setView("pet")} style={{ cursor: "pointer" }}>
@@ -2527,7 +2623,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                 <ABtn label="FEED" emoji="🍔" bg="#c41e3a" onClick={() => doAction("feed")} off={!!act || rally} />
                 <ABtn label="TWEET" emoji="📱" bg="#1da1f2" onClick={() => doAction("tweet")} off={!!act || rally} />
                 <ABtn label="OWN" emoji="💥" bg="#dc2626" onClick={() => doAction("own")} off={!!act || rally} />
-                <ABtn label="DEBATE" emoji="🎤" bg="#7c3aed" onClick={() => doAction("rally")} off={!!act || rally} />
+                <ABtn label="PROTECT" emoji="🎯" bg="#7c3aed" onClick={() => doAction("rally")} off={!!act || rally} />
                 <ABtn label={lightsOff ? "WAKE" : "SLEEP"} emoji={lightsOff ? "☀️" : "🌙"} bg="#334155" onClick={() => doAction("light")} off={!!act || rally} />
               </div>
               {/* Clean — only shows when poops exist */}
