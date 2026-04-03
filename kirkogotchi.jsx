@@ -1040,7 +1040,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [particles, setParticles] = useState([]);
   const [evolveFlash, setEvolveFlash] = useState(false);
   const [dearIdx, setDearIdx] = useState(0);
-  const [faceSlider, setFaceSlider] = useState(1.0);
+  const faceSlider = 1.0;
   const [kFlash, setKFlash] = useState(false);
   const [shake, setShake] = useState(false);
   const [kirkifyIdx, setKirkifyIdx] = useState(0);
@@ -1077,15 +1077,15 @@ window.Kirkogotchi = function Kirkogotchi() {
       setPet(d.p || null);
       setPoops(d.pp || []);
       setLog(d.lg || []);
-      setFaceSlider(d.fs != null ? d.fs : 1.0);
+
       setStats(d.st || { tweets: 0, libsOwned: 0 });
       if (d.p && !d.p.alive) setShowMemorial(true);
     }
     setLoaded(true);
   }, []);
 
-  const save = useCallback((p, pp, lg, fs, st) => {
-    storage.set("kirk_v8", { p, pp: pp || [], lg: lg || [], fs: fs != null ? fs : 1.0, st: st || { tweets: 0, libsOwned: 0 } });
+  const save = useCallback((p, pp, lg, st) => {
+    storage.set("kirk_v8", { p, pp: pp || [], lg: lg || [], st: st || { tweets: 0, libsOwned: 0 } });
   }, []);
 
   // Keep poops ref in sync
@@ -1222,9 +1222,9 @@ window.Kirkogotchi = function Kirkogotchi() {
   // Auto-save
   useEffect(() => {
     if (!pet) return;
-    const iv = setInterval(() => save(pet, poops, log, faceSlider, stats), 3000);
+    const iv = setInterval(() => save(pet, poops, log, stats), 3000);
     return () => clearInterval(iv);
-  }, [pet, poops, log, faceSlider, stats, save]);
+  }, [pet, poops, log, stats, save]);
 
   // Actions
   const doAction = useCallback((type) => {
@@ -1360,9 +1360,9 @@ window.Kirkogotchi = function Kirkogotchi() {
     setPoops([]);
     setLog(lg);
     setStats(st);
-    setFaceSlider(1.0);
+
     setShowMemorial(false);
-    save(p, [], lg, 1.0, st);
+    save(p, [], lg, st);
     setMsg(name + " has arrived!");
     sfxHatch();
     setTimeout(() => setMsg(""), 1800);
@@ -1377,7 +1377,7 @@ window.Kirkogotchi = function Kirkogotchi() {
     setLightsOff(false);
     setRally(false);
     setView("pet");
-    setFaceSlider(1.0);
+
     setShowMemorial(false);
     setStats({ tweets: 0, libsOwned: 0 });
   }, []);
@@ -1396,23 +1396,6 @@ window.Kirkogotchi = function Kirkogotchi() {
     setTimeout(() => setTapReaction(""), 2000);
   }, [pet, rally]);
 
-  // Face slider comment
-  const [faceComment, setFaceComment] = useState("");
-  const faceCommentRef = useRef(null);
-  const handleFaceSlider = useCallback((val) => {
-    setFaceSlider(val);
-    if (faceCommentRef.current) clearTimeout(faceCommentRef.current);
-    var comment = "";
-    if (val < 0.4) comment = "My face is NORMAL SIZED";
-    else if (val > 1.3) comment = "ENHANCE";
-    else if (Math.round(val * 100) === 69) comment = "Nice.";
-    if (comment) {
-      setFaceComment(comment);
-      faceCommentRef.current = setTimeout(() => setFaceComment(""), 2000);
-    } else {
-      setFaceComment("");
-    }
-  }, []);
 
   // Loading
   if (!loaded) {
@@ -1614,29 +1597,6 @@ window.Kirkogotchi = function Kirkogotchi() {
               )}
             </div>
           </div>
-
-          {/* Face slider */}
-          {pet.alive && (
-            <div style={{ margin: "5px 4px 0", display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ fontSize: 14 }}>🤏</span>
-              <input
-                type="range"
-                min="20"
-                max="150"
-                value={Math.round(faceSlider * 100)}
-                onChange={e => handleFaceSlider(Number(e.target.value) / 100)}
-                style={{ flex: 1, accentColor: "#c41e3a", height: 16, cursor: "grab", display: "block" }}
-              />
-              <span style={{ fontSize: 14 }}>😱</span>
-            </div>
-          )}
-          {pet.alive && (
-            <div style={{ textAlign: "center" }}>
-              <span style={{ fontSize: 8, color: "#fff5", fontFamily: "'Bangers',cursive", letterSpacing: 1 }}>
-                FACE SIZE: {Math.round(faceSlider * 100)}%{faceComment ? " — " + faceComment : ""}
-              </span>
-            </div>
-          )}
 
           {/* Stat bars */}
           {pet.alive && (
