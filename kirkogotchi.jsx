@@ -198,6 +198,48 @@ const MEMORIAL_QUOTES = [
   "His face may have been small, but his impact was huge.",
 ];
 
+// ═══ ACHIEVEMENTS ═══
+const ACHIEVEMENTS = [
+  { id: "first_feed", icon: "🍔", title: "FIRST HAMBERDER", desc: "Fed your Kirkie for the first time", check: (s) => s.feeds >= 1 },
+  { id: "first_tweet", icon: "📱", title: "FIRST TWEET", desc: "Sent your first tweet", check: (s) => s.tweets >= 1 },
+  { id: "tweet10", icon: "🐦", title: "TWITTER FINGERS", desc: "Sent 10 tweets", check: (s) => s.tweets >= 10 },
+  { id: "tweet50", icon: "📣", title: "INFLUENCER", desc: "Sent 50 tweets", check: (s) => s.tweets >= 50 },
+  { id: "own5", icon: "💥", title: "SERIAL OWNER", desc: "Owned 5 libs", check: (s) => s.libsOwned >= 5 },
+  { id: "own25", icon: "🔥", title: "LIB DESTROYER", desc: "Owned 25 libs", check: (s) => s.libsOwned >= 25 },
+  { id: "own100", icon: "☠️", title: "EXTINCTION EVENT", desc: "Owned 100 libs", check: (s) => s.libsOwned >= 100 },
+  { id: "debate_flawless", icon: "🏆", title: "FLAWLESS VICTORY", desc: "Won a debate with 0 misses", check: (s) => s.flawlessDebates >= 1 },
+  { id: "survive5", icon: "⏰", title: "5 MINUTE MAN", desc: "Kirkie survived 5 minutes", check: (s) => s.maxAge >= 300 },
+  { id: "survive10", icon: "🕐", title: "TENACIOUS", desc: "Kirkie survived 10 minutes", check: (s) => s.maxAge >= 600 },
+  { id: "survive30", icon: "🏅", title: "ENDURANCE", desc: "Kirkie survived 30 minutes", check: (s) => s.maxAge >= 1800 },
+  { id: "blogger", icon: "📝", title: "PROMOTED: BLOGGER", desc: "Reached Blogger stage", check: (s) => s.maxStage >= 1 },
+  { id: "podcaster", icon: "🎙️", title: "PROMOTED: PODCASTER", desc: "Reached Podcaster stage", check: (s) => s.maxStage >= 2 },
+  { id: "pundit", icon: "📺", title: "PROMOTED: PUNDIT", desc: "Reached Pundit stage", check: (s) => s.maxStage >= 3 },
+  { id: "ceo", icon: "👑", title: "TPUSA CEO", desc: "Reached the final stage", check: (s) => s.maxStage >= 4 },
+  { id: "kirkify5", icon: "👤", title: "KIRKIFIED", desc: "Used Kirkify 5 times", check: (s) => s.kirkifies >= 5 },
+  { id: "clean10", icon: "🧹", title: "JANITOR", desc: "Cleaned 10 poops", check: (s) => s.cleans >= 10 },
+  { id: "streak3", icon: "🔥", title: "3 DAY STREAK", desc: "Played 3 days in a row", check: (s) => s.streak >= 3 },
+  { id: "streak7", icon: "💎", title: "WEEKLY WARRIOR", desc: "7 day streak", check: (s) => s.streak >= 7 },
+  { id: "deaths3", icon: "💀", title: "VALHALLA FREQUENT FLYER", desc: "Lost 3 Kirkies", check: (s) => s.deaths >= 3 },
+];
+
+const STAGE_NUM = { egg: 0, baby: 1, child: 2, teen: 3, adult: 4 };
+
+// ═══ DAILY STREAK ═══
+function checkStreak() {
+  const data = storage.get("kirk_streak") || { last: null, count: 0 };
+  const today = new Date().toISOString().slice(0, 10);
+  if (data.last === today) return data; // Already checked in today
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (data.last === yesterday) {
+    data.count++;
+  } else if (data.last !== today) {
+    data.count = 1; // Streak broken
+  }
+  data.last = today;
+  storage.set("kirk_streak", data);
+  return data;
+}
+
 // ═══ AUDIO ═══
 let _ctx = null;
 function getCtx() {
@@ -236,6 +278,18 @@ function sfxTap() { tone(800, 0.02, 0.03); }
 function sfxCatch() { tone(1200, 0.03, 0.04); }
 function sfxLight() { tone(180, 0.12, 0.04, "triangle"); }
 function sfxDebateHit() { tone(600, 0.04, 0.05); setTimeout(() => tone(900, 0.03, 0.04), 50); }
+function sfxAchievement() {
+  // Triumphant 4-note arpeggio
+  [0, 80, 160, 280].forEach((t, i) => setTimeout(() => tone([523, 659, 784, 1047][i], 0.12, 0.05, "triangle"), t));
+}
+function sfxEvolveFanfare() {
+  // Majestic ascending fanfare
+  const notes = [392, 440, 523, 587, 659, 784];
+  notes.forEach((f, i) => setTimeout(() => tone(f, 0.15, 0.06, "triangle"), i * 100));
+  // Triumphant chord at end
+  setTimeout(() => { tone(523, 0.4, 0.04, "triangle"); tone(659, 0.4, 0.04, "triangle"); tone(784, 0.4, 0.04, "triangle"); }, 700);
+}
+function sfxStreakBonus() { tone(440, 0.08, 0.04, "triangle"); setTimeout(() => tone(660, 0.1, 0.05, "triangle"), 100); }
 
 // "We Are Charlie Kirk" chiptune — simplified 8-bit melody
 let _memorial = null;
@@ -502,43 +556,60 @@ function Kirk({ stage, mood, faceSize, frame, dark, scale, gender, blink }) {
 function Bar({ icon, value, color, warn }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 4, flex: 1 }}>
-      <span style={{ fontSize: 11, animation: warn ? "pulse 0.6s infinite" : "none" }}>{icon}</span>
-      <div style={{ flex: 1, height: 8, background: "#1a3a6a22", borderRadius: 4, overflow: "hidden" }}>
+      <span style={{ fontSize: 11, animation: warn ? "pulse 0.6s infinite" : "none", transition: "transform 0.3s" }}>{icon}</span>
+      <div style={{ flex: 1, height: 9, background: "#1a3a6a15", borderRadius: 5, overflow: "hidden", position: "relative" }}>
         <div style={{
           height: "100%",
           width: Math.max(0, value) + "%",
-          background: value < 20 ? "#ef4444" : color,
-          borderRadius: 4,
-          transition: "width 0.5s ease",
-          boxShadow: value < 20 ? "0 0 6px #ef444488" : "none",
+          background: value < 20
+            ? "linear-gradient(90deg, #ef4444, #dc2626)"
+            : "linear-gradient(90deg, " + color + "cc, " + color + ")",
+          borderRadius: 5,
+          transition: "width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          boxShadow: value < 20 ? "0 0 8px #ef444466, inset 0 1px 1px #fff3" : "inset 0 1px 1px #fff2",
+        }} />
+        {/* Shine overlay */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: "40%",
+          background: "linear-gradient(180deg, #fff2, transparent)",
+          borderRadius: "5px 5px 0 0",
+          pointerEvents: "none",
         }} />
       </div>
+      <span style={{ fontSize: 6, fontFamily: "'Press Start 2P',monospace", color: "#fff6", minWidth: 18, textAlign: "right" }}>{Math.round(value)}</span>
     </div>
   );
 }
 
 // ═══ ACTION BUTTON ═══
 function ABtn({ label, emoji, bg, onClick, off, sm }) {
+  const [pressed, setPressed] = useState(false);
   return (
     <button
       onClick={onClick}
       disabled={off}
-      onPointerDown={e => { if (!off) e.currentTarget.style.transform = "scale(0.88)"; }}
-      onPointerUp={e => { e.currentTarget.style.transform = "scale(1)"; }}
-      onPointerLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+      onPointerDown={e => { if (!off) { setPressed(true); e.currentTarget.style.transform = "scale(0.85)"; } }}
+      onPointerUp={e => { setPressed(false); e.currentTarget.style.transform = "scale(1)"; }}
+      onPointerLeave={e => { setPressed(false); e.currentTarget.style.transform = "scale(1)"; }}
       style={{
-        width: sm ? 34 : 44, height: sm ? 34 : 44, borderRadius: "50%",
-        background: "radial-gradient(circle at 38% 28%, " + bg + "ee, " + bg + "88 65%, #111)",
-        border: "2px solid #0005",
-        boxShadow: "0 3px 8px #0004, inset 0 1px 1px #fff2",
+        width: sm ? 36 : 46, height: sm ? 36 : 46, borderRadius: "50%",
+        background: pressed
+          ? "radial-gradient(circle at 50% 50%, " + bg + "ff, " + bg + "aa 60%, #222)"
+          : "radial-gradient(circle at 38% 28%, " + bg + "ee, " + bg + "88 65%, #111)",
+        border: "2px solid #0004",
+        boxShadow: pressed
+          ? "0 1px 4px #0004, inset 0 2px 4px #0003"
+          : "0 4px 12px #0005, inset 0 1px 2px #fff2",
         cursor: off ? "not-allowed" : "pointer",
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 0,
         opacity: off ? 0.25 : 1,
-        transition: "transform 0.06s, opacity 0.2s",
+        transition: "transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.1s, opacity 0.2s",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      {emoji ? <span style={{ fontSize: sm ? 12 : 14, lineHeight: 1 }}>{emoji}</span> : null}
-      <span style={{ fontSize: sm ? 5 : 6, fontFamily: "'Bangers',cursive", color: "#fff", textShadow: "0 1px 2px #0008", letterSpacing: 0.5 }}>{label}</span>
+      {emoji ? <span style={{ fontSize: sm ? 13 : 15, lineHeight: 1, filter: off ? "grayscale(1)" : "none" }}>{emoji}</span> : null}
+      <span style={{ fontSize: sm ? 5 : 6.5, fontFamily: "'Bangers',cursive", color: "#fff", textShadow: "0 1px 3px #000a", letterSpacing: 0.5 }}>{label}</span>
     </button>
   );
 }
@@ -1012,6 +1083,108 @@ const KIRKIFY_TEMPLATES = [
   )},
 ];
 
+// ═══ ACHIEVEMENT TOAST ═══
+function AchievementToast({ achievement, onDone }) {
+  useEffect(() => {
+    sfxAchievement();
+    const t = setTimeout(onDone, 3500);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <div style={{
+      position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)",
+      zIndex: 999, animation: "toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+      pointerEvents: "none",
+    }}>
+      <div style={{
+        background: "linear-gradient(135deg, #1a3a6a 0%, #0d2240 100%)",
+        border: "2px solid #c41e3a",
+        borderRadius: 16,
+        padding: "10px 18px",
+        display: "flex", alignItems: "center", gap: 10,
+        boxShadow: "0 8px 32px #000a, 0 0 20px #c41e3a33",
+        minWidth: 220,
+      }}>
+        <span style={{ fontSize: 28 }}>{achievement.icon}</span>
+        <div>
+          <div style={{ fontSize: 11, fontFamily: "'Bangers',cursive", color: "#c41e3a", letterSpacing: 2 }}>ACHIEVEMENT</div>
+          <div style={{ fontSize: 13, fontFamily: "'Bangers',cursive", color: "#fff", letterSpacing: 1 }}>{achievement.title}</div>
+          <div style={{ fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#fff8", marginTop: 2 }}>{achievement.desc}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══ EVOLUTION CEREMONY ═══
+function EvolutionCeremony({ fromStage, toStage, name, gender, onDone }) {
+  const [phase, setPhase] = useState(0); // 0=flash, 1=show, 2=done
+  const [f, setF] = useState(0);
+
+  useEffect(() => {
+    sfxEvolveFanfare();
+    setTimeout(() => setPhase(1), 400);
+    setTimeout(() => setPhase(2), 3200);
+    setTimeout(onDone, 3500);
+    const iv = setInterval(() => setF(p => (p + 1) % 4), 200);
+    return () => clearInterval(iv);
+  }, [onDone]);
+
+  const newLabel = STAGES[toStage] ? STAGES[toStage].label : toStage;
+
+  return (
+    <div style={{
+      position: "absolute", inset: 0, zIndex: 50,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: phase === 0 ? "#fff" : "#080e1aee",
+      transition: "background 0.4s",
+      borderRadius: 7,
+    }}>
+      {phase >= 1 && (
+        <div style={{ textAlign: "center", animation: "evolveIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
+          {/* Sparkle ring */}
+          <svg viewBox="0 0 100 100" style={{ width: 140, height: 140, display: "block", margin: "0 auto" }}>
+            {/* Rotating sparkles */}
+            {Array.from({ length: 8 }, (_, i) => {
+              const angle = (i / 8) * Math.PI * 2 + f * 0.3;
+              const r = 38 + Math.sin(f + i) * 4;
+              return <circle key={i} cx={50 + Math.cos(angle) * r} cy={50 + Math.sin(angle) * r} r={1.5} fill={i % 2 ? "#c41e3a" : "#f5a623"} opacity={0.6 + Math.sin(f + i) * 0.3} />;
+            })}
+            <g transform="translate(50, 50)">
+              <Kirk stage={toStage} mood="happy" faceSize={1} frame={f} scale={0.8} gender={gender} />
+            </g>
+          </svg>
+          <div style={{ fontSize: 8, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a", letterSpacing: 2, marginTop: 4 }}>PROMOTED!</div>
+          <div style={{ fontSize: 18, fontFamily: "'Bangers',cursive", color: "#fff", letterSpacing: 3, marginTop: 2 }}>{newLabel.toUpperCase()}</div>
+          <div style={{ fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#fff6", marginTop: 4 }}>{name} leveled up!</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══ STREAK BANNER ═══
+function StreakBanner({ streak, isNew }) {
+  if (streak < 2 || !isNew) return null;
+  return (
+    <div style={{
+      textAlign: "center", padding: "4px 0",
+      animation: "slideUp 0.3s ease-out",
+    }}>
+      <span style={{
+        fontSize: 8, fontFamily: "'Press Start 2P',monospace",
+        color: "#f59e0b",
+        background: "#f59e0b18",
+        padding: "2px 8px",
+        borderRadius: 8,
+      }}>
+        🔥 {streak} DAY STREAK! +{Math.min(streak * 2, 20)} bonus stats
+      </span>
+    </div>
+  );
+}
+
 // ═══ PARTICLE HELPERS ═══
 function mkParticles(cx, cy, color) {
   return Array.from({ length: 12 }, () => ({
@@ -1045,12 +1218,17 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [shake, setShake] = useState(false);
   const [kirkifyIdx, setKirkifyIdx] = useState(0);
   const [idleMsg, setIdleMsg] = useState("");
-  const [stats, setStats] = useState({ tweets: 0, libsOwned: 0 });
+  const [stats, setStats] = useState({ tweets: 0, libsOwned: 0, feeds: 0, cleans: 0, kirkifies: 0, flawlessDebates: 0, maxAge: 0, maxStage: 0, deaths: 0, streak: 0 });
   const [showMemorial, setShowMemorial] = useState(false);
   const [blinking, setBlinking] = useState(false);
-  const [bgIdx, setBgIdx] = useState(-1); // -1 = default bg, 0+ = kirkify bg
+  const [bgIdx, setBgIdx] = useState(-1);
   const [tapReaction, setTapReaction] = useState("");
+  const [achievementQueue, setAchievementQueue] = useState([]);
+  const [showingAchievement, setShowingAchievement] = useState(null);
+  const [evolving, setEvolving] = useState(null); // { from, to }
+  const [streakData, setStreakData] = useState({ count: 0, isNew: false });
   const poopsRef = useRef([]);
+  const unlockedRef = useRef(new Set());
 
   // Load saved data (with v6 migration)
   useEffect(() => {
@@ -1090,6 +1268,50 @@ window.Kirkogotchi = function Kirkogotchi() {
 
   // Keep poops ref in sync
   useEffect(() => { poopsRef.current = poops; }, [poops]);
+
+  // Daily streak check on load
+  useEffect(() => {
+    if (!loaded || !pet) return;
+    const sd = checkStreak();
+    const isNew = sd.count > (stats.streak || 0);
+    setStreakData({ count: sd.count, isNew });
+    if (isNew && pet.alive && sd.count >= 2) {
+      sfxStreakBonus();
+      const bonus = Math.min(sd.count * 2, 20);
+      setPet(p => p && p.alive ? ({
+        ...p,
+        happiness: Math.min(100, p.happiness + bonus),
+        clout: Math.min(100, p.clout + bonus),
+      }) : p);
+      setStats(s => ({ ...s, streak: sd.count }));
+      addLog("🔥 " + sd.count + " day streak! +" + bonus + " stats");
+    }
+  }, [loaded, pet?.name]);
+
+  // Achievement checker — runs when stats change
+  useEffect(() => {
+    if (!stats || !pet) return;
+    const unlocked = storage.get("kirk_achievements") || [];
+    unlockedRef.current = new Set(unlocked);
+    const newAch = [];
+    ACHIEVEMENTS.forEach(a => {
+      if (!unlockedRef.current.has(a.id) && a.check(stats)) {
+        unlockedRef.current.add(a.id);
+        newAch.push(a);
+      }
+    });
+    if (newAch.length > 0) {
+      storage.set("kirk_achievements", [...unlockedRef.current]);
+      setAchievementQueue(q => [...q, ...newAch]);
+    }
+  }, [stats, pet]);
+
+  // Show achievements one at a time
+  useEffect(() => {
+    if (showingAchievement || achievementQueue.length === 0) return;
+    setShowingAchievement(achievementQueue[0]);
+    setAchievementQueue(q => q.slice(1));
+  }, [achievementQueue, showingAchievement]);
 
   const addLog = useCallback((text) => {
     setLog(prev => [{ t: text, d: Date.now() }, ...prev].slice(0, 60));
@@ -1185,12 +1407,19 @@ window.Kirkogotchi = function Kirkogotchi() {
         var zeros = [n.hunger <= 0, n.happiness <= 0, n.energy <= 0].filter(Boolean).length;
         if (zeros >= 2) {
           n.alive = false;
+          // Dramatic death sequence: pause, flash, then memorial
           sfxDie();
           addLog("💀 Gone to Valhalla...");
-          // Increment hatched counter
           const hatched = storage.get("kirks_hatched") || 0;
           storage.set("kirks_hatched", hatched + 1);
-          setTimeout(() => setShowMemorial(true), 1500);
+          setStats(s => ({ ...s, deaths: (s.deaths || 0) + 1 }));
+          // Phase 1: Screen goes dark (1.5s)
+          setShake(true);
+          setTimeout(() => setShake(false), 300);
+          // Phase 2: Flash white (0.3s)
+          setTimeout(() => { setEvolveFlash(true); setTimeout(() => setEvolveFlash(false), 300); }, 1200);
+          // Phase 3: Memorial (after 2s)
+          setTimeout(() => setShowMemorial(true), 2000);
         }
 
         // Random poop — more frequent so CLEAN matters
@@ -1203,13 +1432,15 @@ window.Kirkogotchi = function Kirkogotchi() {
           n.clout = Math.max(0, n.clout - 4);
         }
 
-        // Evolution check
+        // Track max age for achievements
+        setStats(s => ({ ...s, maxAge: Math.max(s.maxAge || 0, n.age) }));
+
+        // Evolution check — full ceremony
         var oldStage = stageOf(prev.age);
         var newStage = stageOf(n.age);
         if (oldStage !== newStage) {
-          sfxEvolve();
-          setEvolveFlash(true);
-          setTimeout(() => setEvolveFlash(false), 600);
+          setEvolving({ from: oldStage, to: newStage });
+          setStats(s => ({ ...s, maxStage: Math.max(s.maxStage || 0, STAGE_NUM[newStage] || 0) }));
           addLog("🎉 Promoted to " + STAGES[newStage].label + "!");
         }
 
@@ -1275,6 +1506,7 @@ window.Kirkogotchi = function Kirkogotchi() {
       }));
       addLog("👤 KIRKIFIED!");
       setMsg("👤 KIRKIFIED!");
+      setStats(s => ({ ...s, kirkifies: (s.kirkifies || 0) + 1 }));
       setAct(null);
       setTimeout(() => setMsg(""), 900);
       return;
@@ -1295,6 +1527,7 @@ window.Kirkogotchi = function Kirkogotchi() {
         setMsg("🍔 Hamberder time!");
         addLog("🍔 Hamberder");
         setParticles(p => [...p, ...mkParticles(50, 40, "#c41e3a")]);
+        setStats(s => ({ ...s, feeds: (s.feeds || 0) + 1 }));
       }
       if (type === "tweet") {
         n.happiness = Math.min(100, n.happiness + 9);
@@ -1311,6 +1544,7 @@ window.Kirkogotchi = function Kirkogotchi() {
         setMsg("✨ Based & clean!");
         addLog("🧹 Cleaned up");
         setParticles(p => [...p, ...mkParticles(50, 50, "#3b82f6")]);
+        setStats(s => ({ ...s, cleans: (s.cleans || 0) + 1 }));
       }
       if (type === "own") {
         if (n.energy < 10) { setMsg("⚡ Need energy!"); setAct(null); return prev; }
@@ -1340,7 +1574,11 @@ window.Kirkogotchi = function Kirkogotchi() {
       clout: Math.min(100, p.clout + sc * 2.5 + bonus),
       hunger: Math.max(0, p.hunger - 3), // Debating is hungry work
     }));
-    setStats(s => ({ ...s, libsOwned: (s.libsOwned || 0) + sc }));
+    setStats(s => ({
+      ...s,
+      libsOwned: (s.libsOwned || 0) + sc,
+      flawlessDebates: (s.flawlessDebates || 0) + (perfect ? 1 : 0),
+    }));
     addLog("🎤 Debate: " + sc + " destroyed" + (perfect ? " (FLAWLESS)" : ""));
     setMsg(
       perfect ? "🏆 FLAWLESS DEBATE!" :
@@ -1458,9 +1696,16 @@ window.Kirkogotchi = function Kirkogotchi() {
         @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
         @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         @keyframes critical{0%,100%{box-shadow:0 8px 32px #0008,0 0 0 2px #ef4444,0 0 16px #ef444433}50%{box-shadow:0 8px 32px #0008,0 0 0 2px #ef4444,0 0 28px #ef444466}}
+        @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-30px) scale(0.8)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+        @keyframes evolveIn{from{opacity:0;transform:scale(0.3) rotate(-10deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+        @keyframes popIn{from{transform:scale(0)}50%{transform:scale(1.15)}to{transform:scale(1)}}
+        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
         .shell{animation:glow 2.8s ease-in-out infinite}
         .shell-critical{animation:critical 0.8s ease-in-out infinite !important}
         .view-enter{animation:fadeIn 0.25s ease-out}
+        .pop-in{animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+        .btn-hover:active{transform:scale(0.85) !important;transition:transform 0.06s !important}
       `}</style>
 
       {/* Stars bg */}
@@ -1479,6 +1724,14 @@ window.Kirkogotchi = function Kirkogotchi() {
         ))}
       </div>
 
+      {/* Achievement toast */}
+      {showingAchievement && (
+        <AchievementToast
+          achievement={showingAchievement}
+          onDone={() => setShowingAchievement(null)}
+        />
+      )}
+
       {/* Device shell */}
       <div className={critical ? "shell shell-critical" : "shell"} style={{
         background: "linear-gradient(165deg, #e8e8e8 0%, #b0b0b0 8%, #c41e3a 35%, #8b1525 60%, #1a3a6a 85%, #0d2240 100%)",
@@ -1496,6 +1749,9 @@ window.Kirkogotchi = function Kirkogotchi() {
           <div style={{ textAlign: "center", marginBottom: 4 }}>
             <span style={{ fontSize: 22, color: "#fff", letterSpacing: 3, textShadow: "0 2px 8px #0008, 0 0 12px #c41e3a55" }}>KIRKOGOTCHI</span>
           </div>
+
+          {/* Streak banner */}
+          <StreakBanner streak={streakData.count} isNew={streakData.isNew} />
 
           {/* Screen */}
           <div style={{ background: "#0a0a0a", borderRadius: 10, padding: 4, boxShadow: "inset 0 2px 8px #000a" }}>
@@ -1536,14 +1792,72 @@ window.Kirkogotchi = function Kirkogotchi() {
                   ))}
                   {log.length === 0 && <div style={{ textAlign: "center", fontSize: 8, color: "#1a3a6a44", fontFamily: "'Press Start 2P',monospace", marginTop: 30 }}>No entries yet</div>}
                 </div>
+              ) : view === "ach" ? (
+                <div style={{ padding: 6, minHeight: 120 }}>
+                  <div style={{ fontSize: 12, color: "#1a3a6a", textAlign: "center", marginBottom: 6, fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>
+                    Achievements {[...unlockedRef.current].length}/{ACHIEVEMENTS.length}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
+                    {ACHIEVEMENTS.map(a => {
+                      const unlocked = unlockedRef.current.has(a.id);
+                      return (
+                        <div key={a.id} style={{
+                          background: unlocked ? "#1a3a6a18" : "#1a3a6a08",
+                          borderRadius: 6,
+                          padding: "4px 5px",
+                          opacity: unlocked ? 1 : 0.35,
+                          transition: "opacity 0.3s",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                            <span style={{ fontSize: 12 }}>{unlocked ? a.icon : "🔒"}</span>
+                            <div>
+                              <div style={{ fontSize: 5.5, fontFamily: "'Press Start 2P',monospace", color: "#1a3a6a", lineHeight: 1.4 }}>{a.title}</div>
+                              <div style={{ fontSize: 4, fontFamily: "'Press Start 2P',monospace", color: "#1a3a6a88", lineHeight: 1.4 }}>{a.desc}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : (
                 /* ═══ PET VIEW ═══ */
                 <div style={{ position: "relative", minHeight: 135 }}>
+                  {/* Evolution ceremony overlay */}
+                  {evolving && (
+                    <EvolutionCeremony
+                      fromStage={evolving.from}
+                      toStage={evolving.to}
+                      name={pet.name}
+                      gender={pet.gender}
+                      onDone={() => setEvolving(null)}
+                    />
+                  )}
                   <div style={{ textAlign: "center", padding: "6px 0 2px" }}>
                     <div style={{ fontSize: 13, color: dark ? "#8a9abc" : "#1a3a6a", fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>{pet.name}</div>
                     <div style={{ fontSize: 6, color: dark ? "#5a6a8a" : "#1a3a6a88", fontFamily: "'Press Start 2P',monospace" }}>
                       {pet.alive ? (STAGES[stage] ? STAGES[stage].label : stage) + " · " + Math.floor(pet.age / 60) + "m" : "† IN VALHALLA †"}
                     </div>
+                    {/* XP bar to next stage */}
+                    {pet.alive && stage !== "adult" && (() => {
+                      const stages = ["egg", "baby", "child", "teen", "adult"];
+                      const thresholds = [0, 35, 120, 300, 600];
+                      const idx = stages.indexOf(stage);
+                      const current = pet.age - thresholds[idx];
+                      const needed = thresholds[idx + 1] - thresholds[idx];
+                      const pct = Math.min(100, (current / needed) * 100);
+                      return (
+                        <div style={{ margin: "3px auto 0", width: "70%", height: 4, background: dark ? "#1a2a45" : "#1a3a6a22", borderRadius: 3, overflow: "hidden" }}>
+                          <div style={{
+                            height: "100%", width: pct + "%",
+                            background: "linear-gradient(90deg, #c41e3a, #f59e0b)",
+                            borderRadius: 3,
+                            transition: "width 1s ease",
+                            boxShadow: pct > 80 ? "0 0 6px #f59e0b66" : "none",
+                          }} />
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Tappable Kirk area */}
@@ -1610,7 +1924,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
           {/* Nav */}
           <div style={{ display: "flex", justifyContent: "center", gap: 3, margin: "4px 0" }}>
-            {[["pet", "🏠"], ["kirkify", "📸"], ["meme", "📝"], ["log", "📜"]].map(function([k, ic]) {
+            {[["pet", "🏠"], ["kirkify", "📸"], ["meme", "📝"], ["log", "📜"], ["ach", "🏆"]].map(function([k, ic]) {
               return (
                 <button
                   key={k}
