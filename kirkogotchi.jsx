@@ -521,16 +521,17 @@ function DebateGame({ onDone, name, faceSize }) {
   useEffect(() => {
     const iv = setInterval(() => {
       fc.current++;
-      // Spawn bubbles — speed ramps up
-      const spawnRate = t > 10 ? 6 : t > 5 ? 4 : 3;
+      // Spawn bubbles — smooth difficulty ramp
+      const elapsed = 15 - t;
+      const spawnRate = Math.max(2, 7 - Math.floor(elapsed / 3));
       if (fc.current % spawnRate === 0) {
         const arg = DEBATE_ARGS[Math.floor(Math.random() * DEBATE_ARGS.length)];
         setBubbles(p => [...p, {
           id: Math.random(),
-          x: 195,
-          y: 25 + Math.random() * 80,
+          x: 198,
+          y: 28 + Math.random() * 75,
           text: arg,
-          speed: 1.5 + Math.random() * 1.5 + (15 - t) * 0.1,
+          speed: 1.2 + Math.random() * 1.2 + elapsed * 0.12,
         }]);
       }
       // Move bubbles
@@ -1056,14 +1057,21 @@ window.Kirkogotchi = function Kirkogotchi() {
         var n = {
           ...prev,
           age: prev.age + 1,
-          hunger: Math.max(0, prev.hunger - 0.2),
-          happiness: Math.max(0, prev.happiness - (lightsOff ? 0.03 : 0.11)),
-          energy: Math.min(100, prev.energy + (lightsOff ? 0.32 : -0.05)),
-          clout: Math.max(0, prev.clout - 0.06),
+          hunger: Math.max(0, prev.hunger - 0.22),
+          happiness: Math.max(0, prev.happiness - (lightsOff ? 0.03 : 0.13)),
+          energy: Math.min(100, prev.energy + (lightsOff ? 0.35 : -0.08)),
+          clout: Math.max(0, prev.clout - 0.08),
         };
 
-        // Death check
-        if (n.hunger <= 0 && n.happiness <= 0 && n.energy <= 0) {
+        // Poops make Kirk sad
+        if (poops.length > 0) {
+          n.happiness = Math.max(0, n.happiness - poops.length * 0.02);
+          n.clout = Math.max(0, n.clout - poops.length * 0.03);
+        }
+
+        // Death check — any two stats at 0
+        var zeros = [n.hunger <= 0, n.happiness <= 0, n.energy <= 0].filter(Boolean).length;
+        if (zeros >= 2) {
           n.alive = false;
           sfxDie();
           addLog("💀 Gone to Valhalla...");
@@ -1073,8 +1081,8 @@ window.Kirkogotchi = function Kirkogotchi() {
           setTimeout(() => setShowMemorial(true), 1500);
         }
 
-        // Random poop
-        if (Math.random() < 0.003 && !lightsOff) {
+        // Random poop — more frequent so CLEAN matters
+        if (Math.random() < 0.008 && !lightsOff) {
           setPoops(pp => pp.length < 5 ? [...pp, {
             id: Math.random(),
             x: 55 + Math.random() * 40,
@@ -1211,16 +1219,25 @@ window.Kirkogotchi = function Kirkogotchi() {
 
   const endRally = useCallback((sc, misses) => {
     setRally(false);
+    const perfect = misses === 0;
+    const bonus = perfect ? 10 : 0;
     setPet(p => ({
       ...p,
-      happiness: Math.min(100, p.happiness + Math.min(sc * 3, 25)),
-      energy: Math.max(0, p.energy - 8),
-      clout: Math.min(100, p.clout + sc * 2),
+      happiness: Math.min(100, p.happiness + Math.min(sc * 2.5, 30) + bonus),
+      energy: Math.max(0, p.energy - 6),
+      clout: Math.min(100, p.clout + sc * 2.5 + bonus),
+      hunger: Math.max(0, p.hunger - 3), // Debating is hungry work
     }));
     setStats(s => ({ ...s, libsOwned: (s.libsOwned || 0) + sc }));
-    addLog("🎤 Debate: " + sc + " destroyed");
-    setMsg(sc > 12 ? "🔥 ABSOLUTELY DESTROYED!" : sc > 7 ? "💪 Based!" : "😐 Low energy...");
-    setTimeout(() => setMsg(""), 1200);
+    addLog("🎤 Debate: " + sc + " destroyed" + (perfect ? " (FLAWLESS)" : ""));
+    setMsg(
+      perfect ? "🏆 FLAWLESS DEBATE!" :
+      sc > 12 ? "🔥 ABSOLUTELY DESTROYED!" :
+      sc > 7 ? "💪 Based!" :
+      sc > 3 ? "😐 Mid energy..." :
+      "💀 Low energy. Sad!"
+    );
+    setTimeout(() => setMsg(""), 1500);
   }, [addLog]);
 
   const createPet = useCallback((name) => {
@@ -1309,6 +1326,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   var fs = faceSlider;
   var dark = lightsOff;
   var displayMsg = msg || idleMsg;
+  var critical = pet.alive && (pet.hunger < 10 || pet.happiness < 10 || pet.energy < 5);
 
   return (
     <div style={{
@@ -1330,7 +1348,9 @@ window.Kirkogotchi = function Kirkogotchi() {
         @keyframes kf{0%{filter:invert(1) hue-rotate(180deg) saturate(2)}100%{filter:none}}
         @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
         @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes critical{0%,100%{box-shadow:0 8px 32px #0008,0 0 0 2px #ef4444,0 0 16px #ef444433}50%{box-shadow:0 8px 32px #0008,0 0 0 2px #ef4444,0 0 28px #ef444466}}
         .shell{animation:glow 2.8s ease-in-out infinite}
+        .shell-critical{animation:critical 0.8s ease-in-out infinite !important}
         .view-enter{animation:fadeIn 0.25s ease-out}
       `}</style>
 
@@ -1351,7 +1371,7 @@ window.Kirkogotchi = function Kirkogotchi() {
       </div>
 
       {/* Device shell */}
-      <div className="shell" style={{
+      <div className={critical ? "shell shell-critical" : "shell"} style={{
         background: "linear-gradient(165deg, #e8e8e8 0%, #b0b0b0 8%, #c41e3a 35%, #8b1525 60%, #1a3a6a 85%, #0d2240 100%)",
         borderRadius: "28px 28px 42px 42px",
         padding: 4,
