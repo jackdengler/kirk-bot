@@ -1971,7 +1971,7 @@ window.Kirkogotchi = function Kirkogotchi() {
       setKFlash(true);
       setTimeout(() => setKFlash(false), 300);
       setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length);
-      setView("kirkify");
+      setBgIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length);
       setPet(p => ({
         ...p,
         happiness: Math.min(100, p.happiness + 3),
@@ -2031,6 +2031,7 @@ window.Kirkogotchi = function Kirkogotchi() {
         n.clout = Math.min(100, n.clout + 14);
         setDearIdx(Math.floor(Math.random() * DEAR_LIBS.length));
         setView("meme");
+        setTimeout(() => setView("pet"), 3000); // Auto-dismiss after 3s
         addLog("💥 Owned the libs");
         setParticles(p => [...p, ...mkParticles(50, 40, "#dc2626")]);
         setStats(s => ({ ...s, libsOwned: (s.libsOwned || 0) + 1 }));
@@ -2263,9 +2264,6 @@ window.Kirkogotchi = function Kirkogotchi() {
           {/* Challenge banner (from shared link) */}
           {challengeTarget && <ChallengeBanner targetAge={challengeTarget} />}
 
-          {/* Challenge timer */}
-          {pet.alive && <ChallengeTimer age={pet.age} alive={pet.alive} />}
-
           {/* Screen */}
           <div style={{ background: "#0a0a0a", borderRadius: 10, padding: 4, boxShadow: "inset 0 2px 8px #000a" }}>
             <div style={{
@@ -2286,50 +2284,64 @@ window.Kirkogotchi = function Kirkogotchi() {
               )}
               {rally ? (
                 <DebateGame onDone={endRally} name={pet.name} faceSize={fs} gender={pet.gender} />
-              ) : view === "kirkify" ? (
-                <div style={{ borderRadius: 8, overflow: "hidden", cursor: "pointer" }} onClick={() => { setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length); sfxKirkify(); }}>
-                  {KIRKIFY_TEMPLATES[kirkifyIdx].render(fs, frame)}
-                  <div style={{ background: "#0d2240", padding: "6px 0 4px", textAlign: "center" }}>
-                    <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 3 }}>
-                      <button onClick={(e) => { e.stopPropagation(); shareToX("My Kirkie got Kirkified 👤\n\n" + KIRKIFY_TEMPLATES[kirkifyIdx].name + "\n\nMake your own 👇"); }}
-                        style={{ background: "#000", border: "none", borderRadius: 8, color: "#fff", fontFamily: "'Press Start 2P',monospace", fontSize: 5, padding: "3px 8px", cursor: "pointer" }}>
-                        𝕏 POST
-                      </button>
-                      <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#fff3", lineHeight: "20px" }}>
-                        {kirkifyIdx + 1}/{KIRKIFY_TEMPLATES.length} · TAP FOR MORE
-                      </span>
-                    </div>
+              ) : view === "meme" ? (
+                /* Dear Libs overlay — shown briefly when OWN is tapped */
+                <div onClick={() => setView("pet")} style={{ cursor: "pointer" }}>
+                  <DearLib data={DEAR_LIBS[dearIdx]} fs={fs} />
+                  <div style={{ textAlign: "center", padding: 3 }}>
+                    <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: dark ? "#5a6a8a" : "#1a3a6a88" }}>TAP TO DISMISS</span>
                   </div>
                 </div>
-              ) : view === "meme" ? (
-                <DearLib data={DEAR_LIBS[dearIdx]} fs={fs} />
-              ) : view === "sticker" ? (
-                <StickerPicker frame={frame} faceSize={fs} gender={pet.gender} />
-              ) : view === "maker" ? (
-                <MemeMaker faceSize={fs} frame={frame} />
-              ) : view === "quotes" ? (
-                <QuoteGenerator frame={frame} />
-              ) : view === "ach" ? (
-                <div style={{ padding: 6, minHeight: 120 }}>
-                  <div style={{ fontSize: 12, color: "#1a3a6a", textAlign: "center", marginBottom: 6, fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>
-                    Achievements {[...unlockedRef.current].length}/{ACHIEVEMENTS.length}
+              ) : view === "share" ? (
+                /* ═══ SHARE HUB — all shareable content in one scrollable view ═══ */
+                <div style={{ maxHeight: 260, overflowY: "auto", overflowX: "hidden" }}>
+                  {/* Kirkify gallery */}
+                  <div style={{ borderRadius: 8, overflow: "hidden", cursor: "pointer", marginBottom: 4 }} onClick={() => { setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length); sfxKirkify(); }}>
+                    {KIRKIFY_TEMPLATES[kirkifyIdx].render(fs, frame)}
+                    <div style={{ background: "#0d2240", padding: "4px 0", textAlign: "center", display: "flex", justifyContent: "center", gap: 6 }}>
+                      <button onClick={(e) => { e.stopPropagation(); shareToX("My Kirkie got Kirkified 👤\n\n" + KIRKIFY_TEMPLATES[kirkifyIdx].name + "\n\nMake your own 👇"); }}
+                        style={{ background: "#000", border: "none", borderRadius: 8, color: "#fff", fontFamily: "'Press Start 2P',monospace", fontSize: 5, padding: "3px 8px", cursor: "pointer" }}>𝕏 POST</button>
+                      <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#fff3", lineHeight: "20px" }}>{kirkifyIdx + 1}/{KIRKIFY_TEMPLATES.length} · TAP</span>
+                    </div>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
+
+                  {/* Meme maker */}
+                  <div style={{ background: "#1a3a6a11", borderRadius: 8, padding: 2, marginBottom: 4 }}>
+                    <MemeMaker faceSize={fs} frame={frame} />
+                  </div>
+
+                  {/* Kirk quotes */}
+                  <div style={{ background: "#1a3a6a11", borderRadius: 8, padding: 2, marginBottom: 4 }}>
+                    <QuoteGenerator frame={frame} />
+                  </div>
+
+                  {/* Reaction stickers */}
+                  <div style={{ background: "#1a3a6a11", borderRadius: 8, padding: 2 }}>
+                    <StickerPicker frame={frame} faceSize={fs} gender={pet.gender} />
+                  </div>
+                </div>
+              ) : view === "ach" ? (
+                /* ═══ ACHIEVEMENTS ═══ */
+                <div style={{ padding: 6, maxHeight: 260, overflowY: "auto" }}>
+                  <div style={{ fontSize: 12, color: "#1a3a6a", textAlign: "center", marginBottom: 6, fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>
+                    🏆 {[...unlockedRef.current].length}/{ACHIEVEMENTS.length}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
                     {ACHIEVEMENTS.map(a => {
                       const unlocked = unlockedRef.current.has(a.id);
                       return (
                         <div key={a.id} style={{
                           background: unlocked ? "#1a3a6a18" : "#1a3a6a08",
-                          borderRadius: 6,
-                          padding: "4px 5px",
-                          opacity: unlocked ? 1 : 0.35,
+                          borderRadius: 8,
+                          padding: "5px 6px",
+                          opacity: unlocked ? 1 : 0.3,
                           transition: "opacity 0.3s",
                         }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                            <span style={{ fontSize: 12 }}>{unlocked ? a.icon : "🔒"}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <span style={{ fontSize: 14 }}>{unlocked ? a.icon : "🔒"}</span>
                             <div>
-                              <div style={{ fontSize: 5.5, fontFamily: "'Press Start 2P',monospace", color: "#1a3a6a", lineHeight: 1.4 }}>{a.title}</div>
-                              <div style={{ fontSize: 4, fontFamily: "'Press Start 2P',monospace", color: "#1a3a6a88", lineHeight: 1.4 }}>{a.desc}</div>
+                              <div style={{ fontSize: 6, fontFamily: "'Press Start 2P',monospace", color: "#1a3a6a", lineHeight: 1.5 }}>{a.title}</div>
+                              <div style={{ fontSize: 4.5, fontFamily: "'Press Start 2P',monospace", color: "#1a3a6a88", lineHeight: 1.4 }}>{a.desc}</div>
                             </div>
                           </div>
                         </div>
@@ -2545,7 +2557,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
           {/* Nav */}
           <div style={{ display: "flex", justifyContent: "center", gap: 3, margin: "4px 0" }}>
-            {[["pet", "🏠"], ["kirkify", "📸"], ["sticker", "😤"], ["maker", "✏️"], ["quotes", "💬"], ["ach", "🏆"]].map(function([k, ic]) {
+            {[["pet", "🐣 KIRKIE"], ["share", "📸 SHARE"], ["ach", "🏆 " + [...unlockedRef.current].length + "/" + ACHIEVEMENTS.length]].map(function([k, label]) {
               const hasNotif = (k === "pet" && view !== "pet" && poops.length > 0) ||
                                (k === "ach" && achievementQueue.length > 0);
               return (
@@ -2559,17 +2571,21 @@ window.Kirkogotchi = function Kirkogotchi() {
                   style={{
                     background: view === k ? "#1a3a6a" : "#fff1",
                     border: "1px solid #fff3",
-                    borderRadius: 10,
+                    borderRadius: 12,
                     color: view === k ? "#fff" : "#fff8",
-                    fontSize: 18,
-                    padding: "2px 14px",
+                    fontSize: 9,
+                    fontFamily: "'Bangers',cursive",
+                    letterSpacing: 1,
+                    padding: "4px 12px",
                     cursor: "pointer",
                     transition: "all 0.15s",
                     position: "relative",
                     transform: view === k ? "scale(1.05)" : "scale(1)",
+                    flex: 1,
+                    textAlign: "center",
                   }}
                 >
-                  {ic}
+                  {label}
                   {hasNotif && (
                     <div style={{
                       position: "absolute", top: -2, right: -2,

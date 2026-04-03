@@ -31,20 +31,9 @@
     <div class="title">KIRKOGOTCHI</div>
     <div class="fact" id="kirk-fact">Loading facts and freedom...</div>
     <script>
-      var facts = [
-        "Kirk fact: His face IS the normal size.",
-        "Loading liberty...",
-        "Calculating optimal face-to-head ratio...",
-        "Warming up the debate podium...",
-        "Kirk fact: He has never lost an argument (in his mind).",
-        "Preparing hamberders...",
-        "Calibrating clout meters...",
-        "Kirk fact: Valhalla has WiFi now.",
-        "Consulting the Constitution...",
-        "We Are Charlie Kirk. Loading...",
-      ];
+      var facts = ["Preparing hamberders...", "Calibrating clout meters...", "We Are Charlie Kirk."];
       var fi = 0;
-      setInterval(function() { fi = (fi + 1) % facts.length; document.getElementById('kirk-fact').textContent = facts[fi]; }, 2000);
+      setInterval(function() { fi = (fi + 1) % facts.length; document.getElementById('kirk-fact').textContent = facts[fi]; }, 1500);
     </script>
   </div>
   <div id="root"></div>
