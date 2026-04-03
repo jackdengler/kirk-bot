@@ -178,13 +178,20 @@ function playWeAreCharlieKirk() {
   try { if (c.state === "suspended") c.resume(); } catch(e) { return; }
   if (_memorial) { try { _memorial.stop(); } catch(e) {} }
 
-  // Simple solemn melody in C major — chiptune style
+  // Earnest anthem melody — cheesy inspirational, like the actual song
   const notes = [
-    [261, 0.4], [329, 0.4], [392, 0.8], // C E G
-    [349, 0.4], [329, 0.4], [293, 0.8], // F E D
-    [261, 0.4], [293, 0.4], [329, 0.4], [261, 0.8], // C D E C
-    [293, 0.4], [329, 0.4], [349, 0.4], [392, 0.8], // D E F G
-    [329, 0.4], [293, 0.4], [261, 1.2], // E D C (resolve)
+    // "We are..." rising
+    [261, 0.3], [329, 0.3], [392, 0.6],
+    // "Charlie Kirk" — big interval jump
+    [523, 0.4], [466, 0.2], [440, 0.6],
+    // Descending emotional bit
+    [392, 0.3], [349, 0.3], [329, 0.6],
+    // Resolution — hopeful
+    [293, 0.3], [329, 0.3], [392, 0.4], [349, 0.2],
+    // Final hold
+    [329, 0.3], [293, 0.3], [261, 1.0],
+    // Rest
+    [0, 0.5],
   ];
 
   let t = c.currentTime + 0.3;
@@ -192,17 +199,41 @@ function playWeAreCharlieKirk() {
   gain.gain.value = 0.04;
   gain.connect(c.destination);
 
+  // Bass notes (root notes, lower octave)
+  const bass = [
+    [130, 1.2], [110, 1.2], [98, 1.2], [110, 0.8], [130, 0.8], [130, 1.5], [0, 0.5],
+  ];
+
   notes.forEach(([freq, dur]) => {
-    const osc = c.createOscillator();
-    osc.type = "triangle";
-    osc.frequency.value = freq;
-    const noteGain = c.createGain();
-    noteGain.gain.setValueAtTime(0.06, t);
-    noteGain.gain.exponentialRampToValueAtTime(0.001, t + dur - 0.05);
-    osc.connect(noteGain).connect(c.destination);
-    osc.start(t);
-    osc.stop(t + dur);
+    if (freq > 0) {
+      const osc = c.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      const noteGain = c.createGain();
+      noteGain.gain.setValueAtTime(0.05, t);
+      noteGain.gain.exponentialRampToValueAtTime(0.001, t + dur - 0.05);
+      osc.connect(noteGain).connect(c.destination);
+      osc.start(t);
+      osc.stop(t + dur);
+    }
     t += dur;
+  });
+
+  // Play bass
+  let bt = c.currentTime + 0.3;
+  bass.forEach(([freq, dur]) => {
+    if (freq > 0) {
+      const osc = c.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const noteGain = c.createGain();
+      noteGain.gain.setValueAtTime(0.03, bt);
+      noteGain.gain.exponentialRampToValueAtTime(0.001, bt + dur - 0.05);
+      osc.connect(noteGain).connect(c.destination);
+      osc.start(bt);
+      osc.stop(bt + dur);
+    }
+    bt += dur;
   });
 
   // Loop it
@@ -512,9 +543,9 @@ function DebateGame({ onDone, name, faceSize }) {
 
         {/* Bubbles */}
         {bubbles.map(b => (
-          <g key={b.id} onClick={() => popBubble(b.id, b.x, b.y)} style={{ cursor: "pointer" }}>
+          <g key={b.id} onPointerDown={(e) => { e.preventDefault(); popBubble(b.id, b.x, b.y); }} style={{ cursor: "pointer" }}>
             <rect x={b.x - 22} y={b.y - 8} width={44} height={16} rx={8} fill="#fff" stroke="#1a3a6a" strokeWidth={0.8} />
-            <text x={b.x} y={b.y + 3} fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#1a3a6a" textAnchor="middle">{b.text}</text>
+            <text x={b.x} y={b.y + 3} fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#1a3a6a" textAnchor="middle" style={{ pointerEvents: "none" }}>{b.text}</text>
           </g>
         ))}
 
@@ -844,9 +875,21 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [stats, setStats] = useState({ tweets: 0, libsOwned: 0 });
   const [showMemorial, setShowMemorial] = useState(false);
 
-  // Load saved data
+  // Load saved data (with v6 migration)
   useEffect(() => {
-    const d = storage.get("kirk_v7");
+    var d = storage.get("kirk_v7");
+    if (!d) {
+      // Try migrating from old format
+      try {
+        const old = localStorage.getItem("kirk_v6");
+        if (old) {
+          const parsed = JSON.parse(old);
+          d = { p: parsed.p, pp: parsed.pp, lg: parsed.lg, fs: 1.0, st: { tweets: 0, libsOwned: 0 } };
+          storage.set("kirk_v7", d);
+          localStorage.removeItem("kirk_v6");
+        }
+      } catch(e) {}
+    }
     if (d) {
       setPet(d.p || null);
       setPoops(d.pp || []);
@@ -914,8 +957,8 @@ window.Kirkogotchi = function Kirkogotchi() {
         setIdleMsg(lines[Math.floor(Math.random() * lines.length)]);
       }
 
-      setTimeout(() => setIdleMsg(""), 3000);
-    }, 6000);
+      setTimeout(() => setIdleMsg(""), 4000);
+    }, 12000);
     return () => clearInterval(iv);
   }, [pet, rally, lightsOff]);
 
@@ -1126,10 +1169,22 @@ window.Kirkogotchi = function Kirkogotchi() {
   }, []);
 
   // Face slider comment
-  var faceComment = "";
-  if (faceSlider < 0.4) faceComment = "My face is NORMAL SIZED";
-  else if (faceSlider > 1.3) faceComment = "ENHANCE";
-  else if (Math.round(faceSlider * 100) === 69) faceComment = "Nice.";
+  const [faceComment, setFaceComment] = useState("");
+  const faceCommentRef = useRef(null);
+  const handleFaceSlider = useCallback((val) => {
+    setFaceSlider(val);
+    if (faceCommentRef.current) clearTimeout(faceCommentRef.current);
+    var comment = "";
+    if (val < 0.4) comment = "My face is NORMAL SIZED";
+    else if (val > 1.3) comment = "ENHANCE";
+    else if (Math.round(val * 100) === 69) comment = "Nice.";
+    if (comment) {
+      setFaceComment(comment);
+      faceCommentRef.current = setTimeout(() => setFaceComment(""), 2000);
+    } else {
+      setFaceComment("");
+    }
+  }, []);
 
   // Loading
   if (!loaded) {
@@ -1310,7 +1365,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                 min="20"
                 max="150"
                 value={Math.round(faceSlider * 100)}
-                onChange={e => setFaceSlider(Number(e.target.value) / 100)}
+                onChange={e => handleFaceSlider(Number(e.target.value) / 100)}
                 style={{ flex: 1, accentColor: "#c41e3a", height: 16, cursor: "grab", display: "block" }}
               />
               <span style={{ fontSize: 14 }}>😱</span>
@@ -1368,6 +1423,7 @@ window.Kirkogotchi = function Kirkogotchi() {
               <>
                 <ABtn label="FEED" emoji="🍔" bg="#c41e3a" onClick={() => doAction("feed")} off={!!act || rally} />
                 <ABtn label="TWEET" emoji="📱" bg="#1da1f2" onClick={() => doAction("tweet")} off={!!act || rally} />
+                <ABtn label="CLEAN" emoji="🧹" bg="#3b82f6" onClick={() => doAction("clean")} off={!!act || rally || poops.length === 0} />
                 <ABtn label="DEBATE" emoji="🎤" bg="#7c3aed" onClick={() => doAction("rally")} off={!!act || rally} />
                 <ABtn label="OWN" emoji="💥" bg="#dc2626" onClick={() => doAction("own")} off={!!act || rally} />
                 <ABtn label="KIRKIFY" emoji="👤" bg="#f59e0b" onClick={() => doAction("kirkify")} off={!!act || rally} />
