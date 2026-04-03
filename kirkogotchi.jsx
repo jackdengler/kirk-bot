@@ -240,6 +240,42 @@ function checkStreak() {
   return data;
 }
 
+// ═══ SHARE HELPERS ═══
+const SITE_URL = "https://jackdengler.github.io/kirk-bot/";
+
+function shareToX(text, url) {
+  const encoded = encodeURIComponent(text + "\n\n" + (url || SITE_URL));
+  window.open("https://x.com/intent/tweet?text=" + encoded, "_blank", "width=550,height=420");
+}
+
+function shareNative(title, text, url) {
+  if (navigator.share) {
+    navigator.share({ title, text, url: url || SITE_URL });
+  } else {
+    navigator.clipboard.writeText((url || SITE_URL)).then(() => alert("Link copied!"));
+  }
+}
+
+// ═══ KIRK QUOTES ═══
+const KIRK_QUOTES = [
+  { quote: "You claim to love freedom, yet you sleep 8 hours a day. Curious.", attr: "Charlie Kirk, probably" },
+  { quote: "Socialism is when the government does stuff I don't like.", attr: "Turning Point USA" },
+  { quote: "My face is exactly the right size for my head.", attr: "Charlie Kirk, 2024" },
+  { quote: "I didn't go to college and I turned out fine. You're welcome.", attr: "Charlie Kirk" },
+  { quote: "If healthcare is a right, why does my Kirkogotchi keep dying?", attr: "Turning Point Kirkogotchi" },
+  { quote: "Every morning I wake up and choose facts.", attr: "Charlie Kirk" },
+  { quote: "They tried to cancel me. I became uncancellable.", attr: "Charlie Kirk, from Valhalla" },
+  { quote: "The Constitution doesn't say anything about bedtimes.", attr: "Charlie Kirk, age 8" },
+  { quote: "If capitalism is so bad, why does my Kirkogotchi have a job?", attr: "Turning Point USA" },
+  { quote: "I'm not owned. I'm not owned. I'm not owned.", attr: "Charlie Kirk, being owned" },
+  { quote: "Debate me, coward. I'll wait. (I won't wait.)", attr: "Charlie Kirk" },
+  { quote: "My haters are just fans who haven't accepted it yet.", attr: "Charlie Kirk" },
+  { quote: "Liberty. Freedom. Hamberders.", attr: "The Kirk Doctrine" },
+  { quote: "Libs say my face is small. My impact says otherwise.", attr: "Charlie Kirk" },
+  { quote: "We are ALL Charlie Kirk on this blessed day.", attr: "We Are Charlie Kirk" },
+  { quote: "Ratio + you fell off + I'm in Valhalla + L + cope", attr: "Charlie Kirk's ghost" },
+];
+
 // ═══ AUDIO ═══
 let _ctx = null;
 function getCtx() {
@@ -926,22 +962,43 @@ function MemorialScreen({ pet, stats, onReset, frame, gender }) {
           <div style={{ fontSize: 8, color: "#fff3", fontFamily: "'Press Start 2P',monospace", marginTop: 4 }}>
             Kirkies hatched: {hatched}
           </div>
-          {/* Share button */}
-          <button
-            onClick={() => {
-              const url = window.location.href;
-              if (navigator.share) {
-                navigator.share({ title: "RIP " + pet.name, text: "Pour one out for " + pet.name + ". " + Math.floor(pet.age / 60) + "m survivor. We Are Charlie Kirk.", url });
-              } else {
-                navigator.clipboard.writeText(url).then(() => alert("Memorial link copied!"));
-              }
-            }}
-            style={{
-              background: "none", border: "1px solid #fff3", borderRadius: 12,
-              color: "#fff8", fontFamily: "'Press Start 2P',monospace", fontSize: 6,
-              padding: "3px 10px", cursor: "pointer", marginTop: 6,
-            }}
-          >📋 SHARE MEMORIAL LINK</button>
+          {/* Share buttons — THE viral moment */}
+          <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 6, flexWrap: "wrap" }}>
+            <button
+              onClick={() => {
+                const ageStr = Math.floor(pet.age / 60) + "m " + (pet.age % 60) + "s";
+                const stg = STAGES[stageOf(pet.age)] ? STAGES[stageOf(pet.age)].label : "";
+                shareToX("RIP " + pet.name + " 🕊️\n\n" + stg + " · Survived " + ageStr + "\n" + (stats.tweets || 0) + " tweets · " + (stats.libsOwned || 0) + " libs owned\n\nCan you keep your Kirkie alive longer? 👇", window.location.href);
+              }}
+              style={{
+                background: "#000", border: "1.5px solid #333", borderRadius: 14,
+                color: "#fff", fontFamily: "'Bangers',cursive", fontSize: 11,
+                padding: "5px 14px", cursor: "pointer", letterSpacing: 1,
+              }}
+            >𝕏 POST TO X</button>
+            <button
+              onClick={() => {
+                const url = window.location.href;
+                shareNative("RIP " + pet.name, "Pour one out. " + Math.floor(pet.age / 60) + "m survivor. We Are Charlie Kirk.", url);
+              }}
+              style={{
+                background: "none", border: "1.5px solid #fff3", borderRadius: 14,
+                color: "#fff8", fontFamily: "'Bangers',cursive", fontSize: 11,
+                padding: "5px 14px", cursor: "pointer", letterSpacing: 1,
+              }}
+            >📋 COPY LINK</button>
+            <button
+              onClick={() => {
+                const challengeUrl = SITE_URL + "#challenge=" + pet.age;
+                shareToX("I kept my Kirkie alive for " + Math.floor(pet.age / 60) + "m " + (pet.age % 60) + "s\n\nBet you can't beat that 😤\n\nChallenge link 👇", challengeUrl);
+              }}
+              style={{
+                background: "#c41e3a", border: "none", borderRadius: 14,
+                color: "#fff", fontFamily: "'Bangers',cursive", fontSize: 11,
+                padding: "5px 14px", cursor: "pointer", letterSpacing: 1,
+              }}
+            >🎯 CHALLENGE FRIEND</button>
+          </div>
         </div>
       )}
     </div>
@@ -1323,8 +1380,12 @@ function MemeMaker({ faceSize, frame, onClose }) {
             }}
           />
         ))}
-        <div style={{ textAlign: "center", marginTop: 2 }}>
-          <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a" }}>📸 SCREENSHOT YOUR MEME</span>
+        <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 3 }}>
+          <button onClick={() => shareToX("Dear Liberals,\n\n" + top + "\n" + mid + "\n" + bot + "\n\nCurious. 🤔\n\nMake your own 👇")}
+            style={{ background: "#000", border: "none", borderRadius: 8, color: "#fff", fontFamily: "'Press Start 2P',monospace", fontSize: 5, padding: "3px 8px", cursor: "pointer" }}>
+            𝕏 POST MEME
+          </button>
+          <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a", lineHeight: "20px" }}>📸 SCREENSHOT</span>
         </div>
       </div>
     </div>
@@ -1378,8 +1439,12 @@ function StickerPicker({ frame, faceSize, gender }) {
           >{st.label}</button>
         ))}
       </div>
-      <div style={{ textAlign: "center", marginTop: 4 }}>
-        <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a" }}>📸 SCREENSHOT & SEND TO FRIENDS</span>
+      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4 }}>
+        <button onClick={() => shareToX(sticker.text + "\n\nSend Kirk reactions to your friends 👇")}
+          style={{ background: "#000", border: "none", borderRadius: 8, color: "#fff", fontFamily: "'Press Start 2P',monospace", fontSize: 5, padding: "3px 8px", cursor: "pointer" }}>
+          𝕏 POST
+        </button>
+        <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a", lineHeight: "20px" }}>📸 SCREENSHOT</span>
       </div>
     </div>
   );
@@ -1466,6 +1531,87 @@ function SharedMemorialCard({ data, frame }) {
   );
 }
 
+// ═══ KIRK QUOTE GENERATOR ═══
+function QuoteGenerator({ frame }) {
+  const [idx, setIdx] = useState(Math.floor(Math.random() * KIRK_QUOTES.length));
+  const q = KIRK_QUOTES[idx];
+
+  return (
+    <div style={{ padding: 4 }}>
+      <div style={{ background: "#0d2240", borderRadius: 10, overflow: "hidden" }}>
+        <svg viewBox="0 0 200 130" style={{ display: "block", width: "100%" }}>
+          <rect width="200" height="130" fill="#0d2240" />
+          {/* Quote marks */}
+          <text x="16" y="28" fontSize="20" fontFamily="'Bangers',cursive" fill="#c41e3a33">"</text>
+          {/* Quote text — wrap manually */}
+          {q.quote.length <= 45 ? (
+            <text x="100" y="55" fontSize="6" fontFamily="'Press Start 2P',monospace" fill="#fff" textAnchor="middle" style={{ lineHeight: 1.8 }}>{q.quote}</text>
+          ) : (
+            <g>
+              <text x="100" y="48" fontSize="5.5" fontFamily="'Press Start 2P',monospace" fill="#fff" textAnchor="middle">{q.quote.slice(0, 40)}</text>
+              <text x="100" y="60" fontSize="5.5" fontFamily="'Press Start 2P',monospace" fill="#fff" textAnchor="middle">{q.quote.slice(40)}</text>
+            </g>
+          )}
+          {/* Attribution */}
+          <text x="100" y="80" fontSize="4.5" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle" letterSpacing="1">— {q.attr}</text>
+          {/* Kirk portrait */}
+          <g transform="translate(100, 104)">
+            <Kirk stage="adult" mood="happy" faceSize={1} frame={frame} scale={0.3} />
+          </g>
+          {/* Branding */}
+          <text x="100" y="126" fontSize="3" fontFamily="'Press Start 2P',monospace" fill="#fff2" textAnchor="middle">kirkogotchi · we are charlie kirk</text>
+        </svg>
+      </div>
+      {/* Controls */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 6 }}>
+        <button
+          onClick={() => { setIdx((idx + 1) % KIRK_QUOTES.length); sfxTap(); }}
+          style={{
+            background: "#1a3a6a", border: "none", borderRadius: 12,
+            color: "#fff", fontFamily: "'Bangers',cursive", fontSize: 11,
+            padding: "5px 14px", cursor: "pointer", letterSpacing: 1,
+          }}
+        >🔄 NEXT QUOTE</button>
+        <button
+          onClick={() => shareToX('"' + q.quote + '" — ' + q.attr + "\n\nRaise your own Kirkie 👇")}
+          style={{
+            background: "#000", border: "none", borderRadius: 12,
+            color: "#fff", fontFamily: "'Bangers',cursive", fontSize: 11,
+            padding: "5px 14px", cursor: "pointer", letterSpacing: 1,
+          }}
+        >𝕏 POST</button>
+      </div>
+      <div style={{ textAlign: "center", marginTop: 4 }}>
+        <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a" }}>📸 SCREENSHOT · SHARE · KIRKIFY</span>
+      </div>
+    </div>
+  );
+}
+
+// ═══ CHALLENGE BANNER ═══
+function ChallengeBanner({ targetAge }) {
+  if (!targetAge) return null;
+  const m = Math.floor(targetAge / 60);
+  const s = targetAge % 60;
+  return (
+    <div style={{
+      textAlign: "center", padding: "3px 0",
+      animation: "slideUp 0.3s ease-out",
+    }}>
+      <span style={{
+        fontSize: 7, fontFamily: "'Press Start 2P',monospace",
+        color: "#c41e3a",
+        background: "#c41e3a15",
+        padding: "2px 8px",
+        borderRadius: 8,
+        border: "1px solid #c41e3a33",
+      }}>
+        🎯 BEAT {m}m {s < 10 ? "0" : ""}{s}s — CAN YOU?
+      </span>
+    </div>
+  );
+}
+
 // ═══ PARTICLE HELPERS ═══
 function mkParticles(cx, cy, color) {
   return Array.from({ length: 12 }, () => ({
@@ -1521,12 +1667,17 @@ window.Kirkogotchi = function Kirkogotchi() {
   // Init mute
   useEffect(() => { _muted = muted; }, [muted]);
 
-  // Check for shared death card URL
+  const [challengeTarget, setChallengeTarget] = useState(null);
+
+  // Check for shared death card or challenge URL
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     if (hash.startsWith("rip=")) {
       const data = decodeDeathCard(hash.slice(4));
       if (data) setSharedCard(data);
+    } else if (hash.startsWith("challenge=")) {
+      const age = parseInt(hash.slice(10));
+      if (age > 0) setChallengeTarget(age);
     }
   }, []);
 
@@ -2109,6 +2260,9 @@ window.Kirkogotchi = function Kirkogotchi() {
           {/* Streak banner */}
           <StreakBanner streak={streakData.count} isNew={streakData.isNew} />
 
+          {/* Challenge banner (from shared link) */}
+          {challengeTarget && <ChallengeBanner targetAge={challengeTarget} />}
+
           {/* Challenge timer */}
           {pet.alive && <ChallengeTimer age={pet.age} alive={pet.alive} />}
 
@@ -2136,14 +2290,14 @@ window.Kirkogotchi = function Kirkogotchi() {
                 <div style={{ borderRadius: 8, overflow: "hidden", cursor: "pointer" }} onClick={() => { setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length); sfxKirkify(); }}>
                   {KIRKIFY_TEMPLATES[kirkifyIdx].render(fs, frame)}
                   <div style={{ background: "#0d2240", padding: "6px 0 4px", textAlign: "center" }}>
-                    <div style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a", marginBottom: 2 }}>
-                      📸 SCREENSHOT & SHARE
-                    </div>
-                    <div style={{ fontSize: 4.5, fontFamily: "'Press Start 2P',monospace", color: "#fff3" }}>
-                      TAP FOR MORE · {kirkifyIdx + 1}/{KIRKIFY_TEMPLATES.length}
-                    </div>
-                    <div style={{ fontSize: 3.5, fontFamily: "'Press Start 2P',monospace", color: "#fff2", marginTop: 2 }}>
-                      kirkogotchi · we are charlie kirk
+                    <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 3 }}>
+                      <button onClick={(e) => { e.stopPropagation(); shareToX("My Kirkie got Kirkified 👤\n\n" + KIRKIFY_TEMPLATES[kirkifyIdx].name + "\n\nMake your own 👇"); }}
+                        style={{ background: "#000", border: "none", borderRadius: 8, color: "#fff", fontFamily: "'Press Start 2P',monospace", fontSize: 5, padding: "3px 8px", cursor: "pointer" }}>
+                        𝕏 POST
+                      </button>
+                      <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#fff3", lineHeight: "20px" }}>
+                        {kirkifyIdx + 1}/{KIRKIFY_TEMPLATES.length} · TAP FOR MORE
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2153,6 +2307,8 @@ window.Kirkogotchi = function Kirkogotchi() {
                 <StickerPicker frame={frame} faceSize={fs} gender={pet.gender} />
               ) : view === "maker" ? (
                 <MemeMaker faceSize={fs} frame={frame} />
+              ) : view === "quotes" ? (
+                <QuoteGenerator frame={frame} />
               ) : view === "ach" ? (
                 <div style={{ padding: 6, minHeight: 120 }}>
                   <div style={{ fontSize: 12, color: "#1a3a6a", textAlign: "center", marginBottom: 6, fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>
@@ -2333,7 +2489,13 @@ window.Kirkogotchi = function Kirkogotchi() {
                       <div style={{ fontSize: 16, fontFamily: "'Bangers',cursive", color: "#fff", letterSpacing: 2, marginTop: 2 }}>
                         {Math.floor(pet.age / 60)}m {pet.age % 60}s
                       </div>
-                      <div style={{ fontSize: 6, fontFamily: "'Press Start 2P',monospace", color: "#fff5", marginTop: 2 }}>Can your friends beat this?</div>
+                      {challengeTarget && pet.age >= challengeTarget ? (
+                        <div style={{ fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#22c55e", marginTop: 2, animation: "pulse 0.6s infinite" }}>🏆 CHALLENGE BEATEN!</div>
+                      ) : challengeTarget ? (
+                        <div style={{ fontSize: 6, fontFamily: "'Press Start 2P',monospace", color: "#ef4444", marginTop: 2 }}>❌ Challenge failed ({Math.floor(challengeTarget/60)}m {challengeTarget%60}s needed)</div>
+                      ) : (
+                        <div style={{ fontSize: 6, fontFamily: "'Press Start 2P',monospace", color: "#fff5", marginTop: 2 }}>Can your friends beat this?</div>
+                      )}
                     </div>
                   )}
 
@@ -2383,7 +2545,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
           {/* Nav */}
           <div style={{ display: "flex", justifyContent: "center", gap: 3, margin: "4px 0" }}>
-            {[["pet", "🏠"], ["kirkify", "📸"], ["sticker", "😤"], ["maker", "✏️"], ["ach", "🏆"]].map(function([k, ic]) {
+            {[["pet", "🏠"], ["kirkify", "📸"], ["sticker", "😤"], ["maker", "✏️"], ["quotes", "💬"], ["ach", "🏆"]].map(function([k, ic]) {
               const hasNotif = (k === "pet" && view !== "pet" && poops.length > 0) ||
                                (k === "ach" && achievementQueue.length > 0);
               return (
