@@ -960,6 +960,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [idleMsg, setIdleMsg] = useState("");
   const [stats, setStats] = useState({ tweets: 0, libsOwned: 0 });
   const [showMemorial, setShowMemorial] = useState(false);
+  const poopsRef = useRef([]);
 
   // Load saved data (with v6 migration)
   useEffect(() => {
@@ -990,6 +991,9 @@ window.Kirkogotchi = function Kirkogotchi() {
   const save = useCallback((p, pp, lg, fs, st) => {
     storage.set("kirk_v7", { p, pp: pp || [], lg: lg || [], fs: fs != null ? fs : 1.0, st: st || { tweets: 0, libsOwned: 0 } });
   }, []);
+
+  // Keep poops ref in sync
+  useEffect(() => { poopsRef.current = poops; }, [poops]);
 
   const addLog = useCallback((text) => {
     setLog(prev => [{ t: text, d: Date.now() }, ...prev].slice(0, 60));
@@ -1064,9 +1068,10 @@ window.Kirkogotchi = function Kirkogotchi() {
         };
 
         // Poops make Kirk sad
-        if (poops.length > 0) {
-          n.happiness = Math.max(0, n.happiness - poops.length * 0.02);
-          n.clout = Math.max(0, n.clout - poops.length * 0.03);
+        var currentPoops = poopsRef.current.length;
+        if (currentPoops > 0) {
+          n.happiness = Math.max(0, n.happiness - currentPoops * 0.02);
+          n.clout = Math.max(0, n.clout - currentPoops * 0.03);
         }
 
         // Death check — any two stats at 0
@@ -1408,7 +1413,10 @@ window.Kirkogotchi = function Kirkogotchi() {
                       📸 SCREENSHOT & SHARE
                     </div>
                     <div style={{ fontSize: 4.5, fontFamily: "'Press Start 2P',monospace", color: "#fff3" }}>
-                      TAP FOR MORE · {kirkifyIdx + 1}/{KIRKIFY_TEMPLATES.length} · {KIRKIFY_TEMPLATES[kirkifyIdx].name}
+                      TAP FOR MORE · {kirkifyIdx + 1}/{KIRKIFY_TEMPLATES.length}
+                    </div>
+                    <div style={{ fontSize: 3.5, fontFamily: "'Press Start 2P',monospace", color: "#fff2", marginTop: 2 }}>
+                      kirkogotchi · we are charlie kirk
                     </div>
                   </div>
                 </div>
