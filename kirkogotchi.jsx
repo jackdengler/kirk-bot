@@ -2,7 +2,7 @@ const { useState, useEffect, useCallback, useRef } = React;
 
 // ═══ CONFIG ═══
 const STAGES = {
-  egg: { min: 0, label: "Intern", head: 18 },
+  egg: { min: 0, label: "Intern", head: 22 },
   baby: { min: 35, label: "Blogger", head: 22 },
   child: { min: 120, label: "Podcaster", head: 24 },
   teen: { min: 300, label: "Pundit", head: 26 },
@@ -2460,9 +2460,9 @@ window.Kirkogotchi = function Kirkogotchi() {
                 ["⚡", pet.energy, "#2563eb", pet.energy < 15],
                 ["📢", pet.clout, "#7c3aed", pet.clout < 20],
               ].map(([icon, val, color, warn]) => (
-                <div key={icon} style={{ flex: 1, display: "flex", alignItems: "center", gap: 2 }}>
-                  <span style={{ fontSize: 9, animation: warn ? "pulse 0.6s infinite" : "none" }}>{icon}</span>
-                  <div style={{ flex: 1, height: 6, background: "#fff1", borderRadius: 3, overflow: "hidden" }}>
+                <div key={icon} style={{ flex: 1, display: "flex", alignItems: "center", gap: 3 }}>
+                  <span style={{ fontSize: 12, animation: warn ? "pulse 0.6s infinite" : "none" }}>{icon}</span>
+                  <div style={{ flex: 1, height: 7, background: "#fff1", borderRadius: 4, overflow: "hidden" }}>
                     <div style={{
                       height: "100%", width: Math.max(0, val) + "%",
                       background: val < 20 ? "#ef4444" : color,
@@ -2523,19 +2523,19 @@ window.Kirkogotchi = function Kirkogotchi() {
           {/* Action buttons — clean 4-button layout */}
           {pet.alive ? (
             <div style={{ padding: "4px 6px 6px" }}>
-              <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+              <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
                 <ABtn label="FEED" emoji="🍔" bg="#c41e3a" onClick={() => doAction("feed")} off={!!act || rally} />
                 <ABtn label="TWEET" emoji="📱" bg="#1da1f2" onClick={() => doAction("tweet")} off={!!act || rally} />
+                <ABtn label="OWN" emoji="💥" bg="#dc2626" onClick={() => doAction("own")} off={!!act || rally} />
                 <ABtn label="DEBATE" emoji="🎤" bg="#7c3aed" onClick={() => doAction("rally")} off={!!act || rally} />
                 <ABtn label={lightsOff ? "WAKE" : "SLEEP"} emoji={lightsOff ? "☀️" : "🌙"} bg="#334155" onClick={() => doAction("light")} off={!!act || rally} />
               </div>
-              {/* Contextual row — only shows when needed */}
-              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 4 }}>
-                {poops.length > 0 && (
-                  <ABtn label={"CLEAN " + poops.length} emoji="🧹" bg="#3b82f6" onClick={() => doAction("clean")} off={!!act || rally} sm />
-                )}
-                <ABtn label="OWN" emoji="💥" bg="#dc2626" onClick={() => doAction("own")} off={!!act || rally} sm />
-              </div>
+              {/* Clean — only shows when poops exist */}
+              {poops.length > 0 && (
+                <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
+                  <ABtn label={"CLEAN " + poops.length + "💩"} emoji="🧹" bg="#3b82f6" onClick={() => doAction("clean")} off={!!act || rally} />
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ display: "flex", justifyContent: "center", padding: "8px 6px" }}>
