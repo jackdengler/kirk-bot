@@ -249,7 +249,11 @@ function getCtx() {
   return _ctx;
 }
 
+let _muted = false;
+function setGlobalMute(m) { _muted = m; storage.set("kirk_muted", m); }
+
 function tone(freq, dur, vol, type) {
+  if (_muted) return;
   const c = getCtx();
   if (!c) return;
   try {
@@ -1506,8 +1510,16 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [streakData, setStreakData] = useState({ count: 0, isNew: false });
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [sharedCard, setSharedCard] = useState(null);
+  const [muted, setMuted] = useState(storage.get("kirk_muted") || false);
+  const [combo, setCombo] = useState(0);
+  const [comboTimer, setComboTimer] = useState(null);
+  const [floatingEmoji, setFloatingEmoji] = useState(null);
+  const [holdingItem, setHoldingItem] = useState(null); // emoji Kirk is holding
   const poopsRef = useRef([]);
   const unlockedRef = useRef(new Set());
+
+  // Init mute
+  useEffect(() => { _muted = muted; }, [muted]);
 
   // Check for shared death card URL
   useEffect(() => {
@@ -1752,11 +1764,26 @@ window.Kirkogotchi = function Kirkogotchi() {
     return () => clearInterval(iv);
   }, [pet, poops, log, stats, save]);
 
+  // Combo tracker
+  const triggerCombo = useCallback(() => {
+    if (comboTimer) clearTimeout(comboTimer);
+    setCombo(c => c + 1);
+    const t = setTimeout(() => setCombo(0), 3000);
+    setComboTimer(t);
+  }, [comboTimer]);
+
+  // Floating emoji
+  const float = useCallback((emoji) => {
+    setFloatingEmoji({ emoji, id: Math.random() });
+    setTimeout(() => setFloatingEmoji(null), 1200);
+  }, []);
+
   // Actions
   const doAction = useCallback((type) => {
     if (!pet || !pet.alive || act || rally) return;
     setAct(type);
     doShake();
+    triggerCombo();
 
     if (type === "light") {
       sfxLight();
@@ -1823,6 +1850,8 @@ window.Kirkogotchi = function Kirkogotchi() {
         addLog("🍔 Hamberder");
         setParticles(p => [...p, ...mkParticles(50, 40, "#c41e3a")]);
         setStats(s => ({ ...s, feeds: (s.feeds || 0) + 1 }));
+        float("🍔");
+        setHoldingItem("🍔"); setTimeout(() => setHoldingItem(null), 1200);
       }
       if (type === "tweet") {
         n.happiness = Math.min(100, n.happiness + 9);
@@ -1832,6 +1861,8 @@ window.Kirkogotchi = function Kirkogotchi() {
         addLog("📱 " + tw);
         setParticles(p => [...p, ...mkParticles(50, 38, "#1da1f2")]);
         setStats(s => ({ ...s, tweets: (s.tweets || 0) + 1 }));
+        float("📱");
+        setHoldingItem("📱"); setTimeout(() => setHoldingItem(null), 1200);
       }
       if (type === "clean") {
         n.clout = 100;
@@ -1840,6 +1871,7 @@ window.Kirkogotchi = function Kirkogotchi() {
         addLog("🧹 Cleaned up");
         setParticles(p => [...p, ...mkParticles(50, 50, "#3b82f6")]);
         setStats(s => ({ ...s, cleans: (s.cleans || 0) + 1 }));
+        float("✨");
       }
       if (type === "own") {
         if (n.energy < 10) { setMsg("⚡ Need energy!"); setAct(null); return prev; }
@@ -1851,12 +1883,23 @@ window.Kirkogotchi = function Kirkogotchi() {
         addLog("💥 Owned the libs");
         setParticles(p => [...p, ...mkParticles(50, 40, "#dc2626")]);
         setStats(s => ({ ...s, libsOwned: (s.libsOwned || 0) + 1 }));
+        float("💥");
       }
       return n;
     });
 
+    // Combo bonus
+    if (combo > 1) {
+      const bonus = Math.min(combo * 2, 12);
+      setPet(p => p && p.alive ? ({
+        ...p,
+        happiness: Math.min(100, p.happiness + bonus),
+        clout: Math.min(100, p.clout + bonus),
+      }) : p);
+    }
+
     setTimeout(() => { setAct(null); setMsg(""); }, 1500);
-  }, [pet, act, rally, lightsOff, addLog]);
+  }, [pet, act, rally, lightsOff, addLog, combo, triggerCombo, float]);
 
   const endRally = useCallback((sc, misses) => {
     setRally(false);
@@ -2016,6 +2059,8 @@ window.Kirkogotchi = function Kirkogotchi() {
         .shell-critical{animation:critical 0.8s ease-in-out infinite !important}
         .view-enter{animation:fadeIn 0.25s ease-out}
         .pop-in{animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+        @keyframes floatUp{from{transform:translateY(0);opacity:1}to{transform:translateY(-30px);opacity:0}}
+        @keyframes comboFlash{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
         .btn-hover:active{transform:scale(0.85) !important;transition:transform 0.06s !important}
       `}</style>
 
@@ -2170,15 +2215,22 @@ window.Kirkogotchi = function Kirkogotchi() {
                       const current = pet.age - thresholds[idx];
                       const needed = thresholds[idx + 1] - thresholds[idx];
                       const pct = Math.min(100, (current / needed) * 100);
+                      const nextLabel = STAGES[stages[idx + 1]] ? STAGES[stages[idx + 1]].label : "";
                       return (
-                        <div style={{ margin: "3px auto 0", width: "70%", height: 4, background: dark ? "#1a2a45" : "#1a3a6a22", borderRadius: 3, overflow: "hidden" }}>
-                          <div style={{
-                            height: "100%", width: pct + "%",
-                            background: "linear-gradient(90deg, #c41e3a, #f59e0b)",
-                            borderRadius: 3,
-                            transition: "width 1s ease",
-                            boxShadow: pct > 80 ? "0 0 6px #f59e0b66" : "none",
-                          }} />
+                        <div style={{ margin: "3px auto 0", width: "75%" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 1 }}>
+                            <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: dark ? "#5a6a8a" : "#1a3a6a66" }}>→ {nextLabel}</span>
+                            <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: dark ? "#5a6a8a" : "#1a3a6a44" }}>{Math.round(pct)}%</span>
+                          </div>
+                          <div style={{ height: 4, background: dark ? "#1a2a45" : "#1a3a6a22", borderRadius: 3, overflow: "hidden" }}>
+                            <div style={{
+                              height: "100%", width: pct + "%",
+                              background: "linear-gradient(90deg, #c41e3a, #f59e0b)",
+                              borderRadius: 3,
+                              transition: "width 1s ease",
+                              boxShadow: pct > 80 ? "0 0 6px #f59e0b66" : "none",
+                            }} />
+                          </div>
                         </div>
                       );
                     })()}
@@ -2198,9 +2250,58 @@ window.Kirkogotchi = function Kirkogotchi() {
                           <animate attributeName="opacity" from="0.5" to="0" dur="0.6s" fill="freeze" />
                         </rect>
                       )}
+
+                      {/* Ambient environment */}
+                      {!dark && (
+                        <g>
+                          {/* Ground */}
+                          <rect x="0" y="72" width="100" height="18" fill="#2a6a2a18" rx="2" />
+                          <rect x="0" y="73" width="100" height="1" fill="#3a8a3a22" />
+                          {/* Clouds */}
+                          <ellipse cx={15 + (frame * 0.3) % 100} cy="10" rx="8" ry="3" fill="#fff2" />
+                          <ellipse cx={65 + (frame * 0.2) % 100} cy="14" rx="6" ry="2.5" fill="#fff2" />
+                        </g>
+                      )}
+                      {/* Night scene */}
+                      {dark && (
+                        <g>
+                          {/* Moon */}
+                          <circle cx="82" cy="12" r="6" fill="#f5deb3" opacity="0.4" />
+                          <circle cx="84" cy="11" r="5" fill="#2a3550" />
+                          {/* Stars */}
+                          {[12, 28, 45, 62, 78, 90].map((x, i) => (
+                            <circle key={i} cx={x} cy={5 + (i * 7) % 20} r={0.6} fill="#fff" opacity={0.15 + (frame % 3 === i % 3 ? 0.15 : 0)} />
+                          ))}
+                        </g>
+                      )}
+
                       <g transform="translate(50, 38)">
                         <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} gender={pet.gender} blink={blinking} energy={pet.energy} hunger={pet.hunger} />
+                        {/* Held item */}
+                        {holdingItem && (
+                          <text x={12} y={-2} fontSize="8" opacity={0.9}>
+                            <animate attributeName="y" from="-2" to="-8" dur="1s" fill="freeze" />
+                            <animate attributeName="opacity" from="1" to="0.3" dur="1.2s" fill="freeze" />
+                            {holdingItem}
+                          </text>
+                        )}
                       </g>
+
+                      {/* Floating emoji */}
+                      {floatingEmoji && (
+                        <text key={floatingEmoji.id} x="50" y="25" fontSize="14" textAnchor="middle" opacity="0.9">
+                          <animate attributeName="y" from="30" to="5" dur="1s" fill="freeze" />
+                          <animate attributeName="opacity" from="1" to="0" dur="1.2s" fill="freeze" />
+                          {floatingEmoji.emoji}
+                        </text>
+                      )}
+
+                      {/* Combo indicator */}
+                      {combo > 1 && (
+                        <text x="88" y="12" fontSize="7" fontFamily="'Bangers',cursive" fill="#f59e0b" textAnchor="end" opacity="0.8">
+                          {combo}x!
+                        </text>
+                      )}
                       {mood === "sleep" && (
                         <g>
                           <text x="72" y="28" fontSize="5" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame < 2 ? 0.5 : 0.2}>z</text>
@@ -2349,6 +2450,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                   )}
                 </div>
                 <ABtn label={lightsOff ? "ON" : "OFF"} emoji={lightsOff ? "☀️" : "🌙"} bg="#334155" onClick={() => doAction("light")} off={!!act || rally} sm />
+                <ABtn label={muted ? "🔇" : "🔊"} emoji="" bg="#334155" onClick={() => { const m = !muted; setMuted(m); setGlobalMute(m); }} sm />
               </div>
             </div>
           ) : (
