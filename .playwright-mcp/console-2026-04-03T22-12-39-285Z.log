@@ -1,0 +1,369 @@
+[    1167ms] [WARNING] You are using the in-browser Babel transformer. Be sure to precompile your scripts for production - https://babeljs.io/docs/setup/ @ https://unpkg.com/@babel/standalone/babel.min.js:2
+[    1173ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ https://jackdengler.github.io/kirk-bot/:0
+[    1290ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://jackdengler.github.io/favicon.ico:0
+[    3399ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[    4894ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[    6395ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[    7894ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[    9395ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   10894ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   12393ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   13890ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   15387ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   16886ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   18384ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   19883ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   21382ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   22880ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   24379ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   25878ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   27377ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   28876ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   30848ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   31875ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   33374ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   34873ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   36373ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   37873ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   39372ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   40871ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   42371ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   43871ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   45370ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   46870ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   48370ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   49870ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   51370ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   52870ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   54370ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   55869ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   57369ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   58869ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   60369ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   61870ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   63370ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   64869ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   66368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   67868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   69368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   70868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   72368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   73868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   75368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   76868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   78369ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   79868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   81382ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   82868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   84368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   85868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   87402ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   88868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   90368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   91868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   93368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   94868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   96368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   97867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[   99367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  100867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  102368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  103867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  105367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  106867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  108368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  109868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  111367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  112867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  114367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  115867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  117368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  118868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  120367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  121867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  123366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  124867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  126367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  127867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  129366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  130867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  132368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  133867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  135368ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  136867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  138367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  139866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  141367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  142868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  144367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  145867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  147366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  148867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  150367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  151867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  153366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  154867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  156367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  157866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  159366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  160867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  162367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  163866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  165367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  166866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  168366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  169867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  171367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  172866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  174366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  175866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  177366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  178866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  180366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  181865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  183367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  184866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  186366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  187866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  189365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  190865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  192367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  193865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  195366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  196866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  198367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  199866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  201366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  202865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  204365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  205866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  207366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  208866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  210366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  211865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  213367ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  214866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  216366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  217865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  219366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  220866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  222365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  223865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  225365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  226865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  228366ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  229865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  231365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  232865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  234365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  235865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  237365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  238864ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  240364ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  241866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  243365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  244865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  246365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  247868ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  249364ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  250865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  252364ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  253865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  255365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  256865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  258364ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  259866ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  261365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  262865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  264365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  265867ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  267365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  268865ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  270365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  271864ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  273365ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  274864ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111
+[  276364ms] TypeError: Cannot set properties of null (setting 'textContent')
+    at https://jackdengler.github.io/kirk-bot/:36:111

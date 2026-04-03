@@ -1800,7 +1800,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
   // Idle dialogue
   useEffect(() => {
-    if (!pet || !pet.alive || rally || lightsOff) return;
+    if (!pet || !pet.alive || rally || lightsOff || showOnboarding) return;
     const iv = setInterval(() => {
       if (Math.random() > 0.4) return; // Don't always talk
       const stage = stageOf(pet.age);
@@ -1834,7 +1834,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
   // Game tick
   useEffect(() => {
-    if (!pet || !pet.alive || rally) return;
+    if (!pet || !pet.alive || rally || showOnboarding) return;
     const iv = setInterval(() => {
       setPet(prev => {
         if (!prev || !prev.alive) return prev;
@@ -1906,7 +1906,7 @@ window.Kirkogotchi = function Kirkogotchi() {
       });
     }, 1000);
     return () => clearInterval(iv);
-  }, [pet, lightsOff, rally, addLog]);
+  }, [pet, lightsOff, rally, addLog, showOnboarding]);
 
   // Auto-save
   useEffect(() => {
@@ -2217,23 +2217,25 @@ window.Kirkogotchi = function Kirkogotchi() {
         />
       )}
 
-      {/* Device shell */}
+      {/* Device shell — tight, modern */}
       <div className={critical ? "shell shell-critical" : "shell"} style={{
-        background: "linear-gradient(165deg, #e8e8e8 0%, #b0b0b0 8%, #c41e3a 35%, #8b1525 60%, #1a3a6a 85%, #0d2240 100%)",
-        borderRadius: "28px 28px 42px 42px",
-        padding: 4,
-        maxWidth: 360,
+        background: "#0d2240",
+        borderRadius: 16,
+        maxWidth: 380,
         width: "100%",
+        overflow: "hidden",
+        border: "2px solid #c41e3a44",
       }}>
+        {/* Header bar */}
         <div style={{
-          background: "linear-gradient(168deg, #d4d4d4 0%, #c41e3a 25%, #9b1228 50%, #1a3a6a 80%, #0d2240 100%)",
-          borderRadius: "24px 24px 38px 38px",
-          padding: "10px 8px 14px",
+          background: "linear-gradient(135deg, #c41e3a, #8b1525)",
+          padding: "6px 10px",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
         }}>
-          {/* Title */}
-          <div style={{ textAlign: "center", marginBottom: 4 }}>
-            <span style={{ fontSize: 22, color: "#fff", letterSpacing: 3, textShadow: "0 2px 8px #0008, 0 0 12px #c41e3a55" }}>KIRKOGOTCHI</span>
-          </div>
+          <span style={{ fontSize: 16, color: "#fff", letterSpacing: 2, textShadow: "0 1px 4px #0005" }}>KIRKOGOTCHI</span>
+          <button onClick={() => { const m = !muted; setMuted(m); setGlobalMute(m); }}
+            style={{ background: "none", border: "none", fontSize: 14, cursor: "pointer", opacity: 0.7 }}>{muted ? "🔇" : "🔊"}</button>
+        </div>
 
           {/* Streak banner */}
           <StreakBanner streak={streakData.count} isNew={streakData.isNew} />
@@ -2242,10 +2244,8 @@ window.Kirkogotchi = function Kirkogotchi() {
           {challengeTarget && <ChallengeBanner targetAge={challengeTarget} />}
 
           {/* Screen */}
-          <div style={{ background: "#0a0a0a", borderRadius: 10, padding: 4, boxShadow: "inset 0 2px 8px #000a" }}>
             <div style={{
               background: dark ? "#2a3550" : "#dce8f5",
-              borderRadius: 7,
               overflow: "hidden",
               transition: "background 0.4s",
               animation: kFlash ? "kf 0.2s ease" : "none",
@@ -2341,46 +2341,36 @@ window.Kirkogotchi = function Kirkogotchi() {
                   )}
                   {/* Pet name + stage compact header */}
                   <div style={{ textAlign: "center", padding: "4px 0 0" }}>
-                    <span style={{ fontSize: 12, color: dark ? "#8a9abc" : "#1a3a6a", fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>{pet.name}</span>
-                    {pet.alive && <span style={{ fontSize: 6, color: dark ? "#5a6a8a" : "#1a3a6a88", fontFamily: "'Press Start 2P',monospace", marginLeft: 6 }}>
-                      {STAGES[stage] ? STAGES[stage].label : stage}
+                    <span style={{ fontSize: 14, color: dark ? "#8a9abc" : "#1a3a6a", fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>{pet.name}</span>
+                    {pet.alive && <span style={{ fontSize: 7, color: dark ? "#5a6a8a" : "#1a3a6a66", fontFamily: "'Press Start 2P',monospace", marginLeft: 8 }}>
+                      {STAGES[stage] ? STAGES[stage].label : stage} · {Math.floor(pet.age / 60)}:{(pet.age % 60 < 10 ? "0" : "") + pet.age % 60}
                     </span>}
                   </div>
 
                   {/* Tappable Kirk area */}
                   <div onClick={tapKirk} style={{ cursor: "pointer", position: "relative" }}>
-                    <svg viewBox="0 0 100 90" style={{ display: "block", width: "100%", maxHeight: 110, position: "relative" }}>
+                    <svg viewBox="0 0 100 100" style={{ display: "block", width: "100%", maxHeight: 160, position: "relative" }}>
                       {evolveFlash && (
                         <rect width="100" height="90" fill="#fff" opacity={0.4}>
                           <animate attributeName="opacity" from="0.5" to="0" dur="0.6s" fill="freeze" />
                         </rect>
                       )}
 
-                      {/* Ambient environment */}
+                      {/* Ambient — subtle ground line only */}
                       {!dark && (
                         <g>
-                          {/* Ground */}
-                          <rect x="0" y="72" width="100" height="18" fill="#2a6a2a18" rx="2" />
-                          <rect x="0" y="73" width="100" height="1" fill="#3a8a3a22" />
-                          {/* Clouds */}
-                          <ellipse cx={15 + (frame * 0.3) % 100} cy="10" rx="8" ry="3" fill="#fff2" />
-                          <ellipse cx={65 + (frame * 0.2) % 100} cy="14" rx="6" ry="2.5" fill="#fff2" />
+                          <line x1="0" y1="82" x2="100" y2="82" stroke="#1a3a6a11" strokeWidth="0.5" />
                         </g>
                       )}
-                      {/* Night scene */}
+                      {/* Night — moon only */}
                       {dark && (
                         <g>
-                          {/* Moon */}
-                          <circle cx="82" cy="12" r="6" fill="#f5deb3" opacity="0.4" />
-                          <circle cx="84" cy="11" r="5" fill="#2a3550" />
-                          {/* Stars */}
-                          {[12, 28, 45, 62, 78, 90].map((x, i) => (
-                            <circle key={i} cx={x} cy={5 + (i * 7) % 20} r={0.6} fill="#fff" opacity={0.15 + (frame % 3 === i % 3 ? 0.15 : 0)} />
-                          ))}
+                          <circle cx="85" cy="12" r="5" fill="#f5deb3" opacity="0.3" />
+                          <circle cx="87" cy="11" r="4" fill="#2a3550" />
                         </g>
                       )}
 
-                      <g transform="translate(50, 38)">
+                      <g transform="translate(50, 42)">
                         <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} gender={pet.gender} blink={blinking} energy={pet.energy} hunger={pet.hunger} />
                         {/* Held item */}
                         {holdingItem && (
@@ -2407,20 +2397,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                           <text x="85" y="14" fontSize="10" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame >= 2 ? 0.3 : 0.4}>Z</text>
                         </g>
                       )}
-                      {poops.map((p, i) => (
-                      <g key={p.id}>
-                        <text x={p.x} y={p.y} fontSize="6">💩</text>
-                        {/* Flies on poops */}
-                        {i < 3 && (
-                          <g>
-                            <text x={p.x + Math.sin(frame * 0.8 + i) * 4} y={p.y - 5 + Math.cos(frame * 0.6 + i) * 2} fontSize="3" opacity={0.6}>🪰</text>
-                          </g>
-                        )}
-                        {/* Stink lines */}
-                        <line x1={p.x - 1} y1={p.y - 6} x2={p.x - 2} y2={p.y - 10} stroke="#8a8a3a" strokeWidth={0.3} opacity={0.3 + (frame % 2) * 0.15} />
-                        <line x1={p.x + 2} y1={p.y - 6} x2={p.x + 3} y2={p.y - 9} stroke="#8a8a3a" strokeWidth={0.3} opacity={0.2 + (frame % 2) * 0.15} />
-                      </g>
-                    ))}
+                      {poops.map(p => <text key={p.id} x={p.x} y={p.y} fontSize="7">💩</text>)}
                       {particles.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={1.2} fill={p.c} opacity={p.l / p.ml} />)}
                     </svg>
                   </div>
@@ -2473,7 +2450,6 @@ window.Kirkogotchi = function Kirkogotchi() {
                 </div>
               )}
             </div>
-          </div>
 
           {/* Stat bars — compact single strip */}
           {pet.alive && (
@@ -2566,7 +2542,6 @@ window.Kirkogotchi = function Kirkogotchi() {
               <ABtn label="NEW KIRKIE" emoji="🇺🇸" bg="#c41e3a" onClick={reset} />
             </div>
           )}
-        </div>
       </div>
     </div>
   );
