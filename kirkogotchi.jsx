@@ -375,8 +375,21 @@ const storage = {
   del(key) { try { localStorage.removeItem(key); } catch(e) {} },
 };
 
+// ═══ KIRK IDLE BEHAVIORS ═══
+function getIdlePose(frame, mood, energy) {
+  const t = (frame || 0);
+  // Head tilt — slight rotation oscillation
+  const tilt = Math.sin(t * 0.15) * 1.5;
+  // Eye wander — look left/right occasionally
+  const eyeX = Math.sin(t * 0.2) * 1.2;
+  // Yawn when low energy
+  const yawning = energy !== undefined && energy < 20 && t % 40 > 35;
+  // Shiver when hungry (passed as prop)
+  return { tilt, eyeX, yawning };
+}
+
 // ═══ KIRK FACE ═══
-function Kirk({ stage, mood, faceSize, frame, dark, scale, gender, blink }) {
+function Kirk({ stage, mood, faceSize, frame, dark, scale, gender, blink, energy, hunger }) {
   const s = scale || 1;
   const isGirl = gender === "girl";
   const skin = dark ? "#9a8a70" : "#f4d0a8";
@@ -392,9 +405,14 @@ function Kirk({ stage, mood, faceSize, frame, dark, scale, gender, blink }) {
   const hr = (STAGES[stage] || STAGES.baby).head;
   const R = hr * s;
   const fs = Math.max(0.2, Math.min(1.6, faceSize || 1));
-  // Ambient breathing + bob
-  const breathe = Math.sin((frame || 0) * 0.8) * 0.3 * s;
+
+  // Idle micro-behaviors
+  const idle = getIdlePose(frame, mood, energy);
+  const breathe = Math.sin((frame || 0) * 0.8) * 0.4 * s;
   const bob = [0, -0.5, -1, -0.5][(frame || 0) % 4] * s + breathe;
+  // Shiver when very hungry
+  const shiver = hunger !== undefined && hunger < 15 ? (frame % 2 === 0 ? 0.5 : -0.5) * s : 0;
+
   const isEgg = stage === "egg";
   const isDead = mood === "dead";
   const isSleep = mood === "sleep";
@@ -402,7 +420,7 @@ function Kirk({ stage, mood, faceSize, frame, dark, scale, gender, blink }) {
   const isBlinking = blink;
 
   return (
-    <g transform={"translate(0," + bob + ")"}>
+    <g transform={"translate(" + shiver + "," + bob + ") rotate(" + (isDead || isSleep ? 0 : idle.tilt) + ")"}>
       {isDead && (
         <g>
           <ellipse cx={0} cy={-R - 5 * s} rx={11 * s} ry={3 * s} fill="none" stroke="#c8a82880" strokeWidth={1.5 * s} strokeDasharray={(3 * s) + " " + (2 * s)}>
@@ -485,17 +503,18 @@ function Kirk({ stage, mood, faceSize, frame, dark, scale, gender, blink }) {
             ) : (
               <g>
                 {/* Eyes — with blink */}
-                {isBlinking ? (
+                {isBlinking || idle.yawning ? (
                   <g>
                     <line x1={-7 * s} y1={-4 * s} x2={-3 * s} y2={-4 * s} stroke={outline} strokeWidth={1.5 * s} strokeLinecap="round" />
                     <line x1={3 * s} y1={-4 * s} x2={7 * s} y2={-4 * s} stroke={outline} strokeWidth={1.5 * s} strokeLinecap="round" />
                   </g>
                 ) : (
                   <g>
-                    <ellipse cx={-5 * s} cy={-4 * s} rx={2.2 * s} ry={2.2 * s} fill={outline} />
-                    <ellipse cx={5 * s} cy={-4 * s} rx={2.2 * s} ry={2.2 * s} fill={outline} />
-                    <circle cx={-4 * s} cy={-5 * s} r={0.8 * s} fill="#fff" opacity={0.6} />
-                    <circle cx={6 * s} cy={-5 * s} r={0.8 * s} fill="#fff" opacity={0.6} />
+                    {/* Eyes with idle wander */}
+                    <ellipse cx={(-5 + idle.eyeX) * s} cy={-4 * s} rx={2.2 * s} ry={2.2 * s} fill={outline} />
+                    <ellipse cx={(5 + idle.eyeX) * s} cy={-4 * s} rx={2.2 * s} ry={2.2 * s} fill={outline} />
+                    <circle cx={(-4 + idle.eyeX) * s} cy={-5 * s} r={0.8 * s} fill="#fff" opacity={0.6} />
+                    <circle cx={(6 + idle.eyeX) * s} cy={-5 * s} r={0.8 * s} fill="#fff" opacity={0.6} />
                   </g>
                 )}
                 {/* Eyelashes for girl */}
@@ -508,7 +527,15 @@ function Kirk({ stage, mood, faceSize, frame, dark, scale, gender, blink }) {
                   </g>
                 )}
                 <ellipse cx={0} cy={0} rx={1.2 * s} ry={1.8 * s} fill={skinSh} opacity={0.2} />
-                {mood === "happy" ? (
+                {idle.yawning ? (
+                  <g>
+                    {/* Yawn — big round open mouth */}
+                    <ellipse cx={0} cy={5 * s} rx={3.5 * s} ry={4 * s} fill="#8a4040" stroke={outline} strokeWidth={0.5 * s} />
+                    <ellipse cx={0} cy={3.5 * s} rx={3 * s} ry={1.5 * s} fill={gumColor} />
+                    <rect x={-2 * s} y={2.5 * s} width={1.3 * s} height={1.5 * s} rx={0.3 * s} fill="#fff" />
+                    <rect x={0.7 * s} y={2.5 * s} width={1.3 * s} height={1.5 * s} rx={0.3 * s} fill="#fff" />
+                  </g>
+                ) : mood === "happy" ? (
                   <g>
                     {/* GUMMY SMILE — big open mouth with teeth and gums */}
                     <path d={"M " + (-6 * s) + " " + (3 * s) + " Q 0 " + (12 * s) + " " + (6 * s) + " " + (3 * s)} fill={lipColor} stroke={outline} strokeWidth={0.6 * s} />
@@ -836,7 +863,7 @@ function MemorialScreen({ pet, stats, onReset, frame, gender }) {
           {highestStage.label} · {ageMin}m {ageSec}s
         </text>
         <text x="100" y="102" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#fff4" textAnchor="middle">
-          Tweets: {stats.tweets || 0} · Libs owned: {stats.libsOwned || 0}
+          🐦 {stats.tweets || 0} tweets · 💥 {stats.libsOwned || 0} libs · 🍔 {stats.feeds || 0} fed
         </text>
 
         {/* Quote */}
@@ -1185,6 +1212,54 @@ function StreakBanner({ streak, isNew }) {
   );
 }
 
+// ═══ ONBOARDING ═══
+function Onboarding({ onDone }) {
+  const [step, setStep] = useState(0);
+  const tips = [
+    { icon: "🍔", title: "FEED YOUR KIRKIE", desc: "Tap buttons to keep stats up. If two stats hit zero... Valhalla." },
+    { icon: "👆", title: "TAP YOUR KIRKIE", desc: "Tap Kirk to interact! Backgrounds change and Kirk reacts." },
+    { icon: "🏆", title: "EARN ACHIEVEMENTS", desc: "Tweet, debate, survive — unlock achievements and climb the ranks." },
+  ];
+
+  return (
+    <div style={{
+      position: "absolute", inset: 0, zIndex: 60,
+      background: "#080e1aee",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      borderRadius: 7,
+    }}>
+      <div style={{ textAlign: "center", padding: 16, animation: "popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)" }} key={step}>
+        <div style={{ fontSize: 40, marginBottom: 8 }}>{tips[step].icon}</div>
+        <div style={{ fontSize: 14, fontFamily: "'Bangers',cursive", color: "#fff", letterSpacing: 2, marginBottom: 6 }}>{tips[step].title}</div>
+        <div style={{ fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#fff8", lineHeight: 1.8, maxWidth: 200, margin: "0 auto" }}>{tips[step].desc}</div>
+
+        {/* Progress dots */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 12 }}>
+          {tips.map((_, i) => (
+            <div key={i} style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: i === step ? "#c41e3a" : "#fff3",
+              transition: "background 0.2s",
+            }} />
+          ))}
+        </div>
+
+        <button
+          onClick={() => { sfxTap(); if (step < tips.length - 1) setStep(step + 1); else { storage.set("kirk_onboarded", true); onDone(); } }}
+          style={{
+            marginTop: 14, background: "#c41e3a", border: "none", borderRadius: 16,
+            color: "#fff", fontFamily: "'Bangers',cursive", fontSize: 14,
+            padding: "6px 24px", cursor: "pointer", letterSpacing: 2,
+            boxShadow: "0 3px 12px #c41e3a44",
+          }}
+        >
+          {step < tips.length - 1 ? "NEXT" : "LET'S GO!"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ═══ PARTICLE HELPERS ═══
 function mkParticles(cx, cy, color) {
   return Array.from({ length: 12 }, () => ({
@@ -1227,6 +1302,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [showingAchievement, setShowingAchievement] = useState(null);
   const [evolving, setEvolving] = useState(null); // { from, to }
   const [streakData, setStreakData] = useState({ count: 0, isNew: false });
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const poopsRef = useRef([]);
   const unlockedRef = useRef(new Set());
 
@@ -1604,6 +1680,10 @@ window.Kirkogotchi = function Kirkogotchi() {
     setMsg(name + " has arrived!");
     sfxHatch();
     setTimeout(() => setMsg(""), 1800);
+    // Show onboarding for first-time users
+    if (!storage.get("kirk_onboarded")) {
+      setTimeout(() => setShowOnboarding(true), 2000);
+    }
   }, [save]);
 
   const reset = useCallback(() => {
@@ -1674,6 +1754,12 @@ window.Kirkogotchi = function Kirkogotchi() {
   var dark = lightsOff;
   var displayMsg = msg || tapReaction || idleMsg;
   var critical = pet.alive && (pet.hunger < 10 || pet.happiness < 10 || pet.energy < 5);
+
+  // Time-of-day ambiance
+  var hour = new Date().getHours();
+  var timeOfDay = hour >= 6 && hour < 12 ? "morning" : hour >= 12 && hour < 18 ? "day" : hour >= 18 && hour < 21 ? "evening" : "night";
+  var timeTint = { morning: "#f5deb322", day: "transparent", evening: "#f59e0b15", night: "#1a1a4a22" }[timeOfDay];
+  var overallHealth = pet.alive ? Math.round((pet.hunger + pet.happiness + pet.energy + pet.clout) / 4) : 0;
 
   return (
     <div style={{
@@ -1762,7 +1848,15 @@ window.Kirkogotchi = function Kirkogotchi() {
               transition: "background 0.4s",
               animation: kFlash ? "kf 0.2s ease" : "none",
               transform: shake ? "translate(1px,-1px)" : "none",
+              position: "relative",
             }}>
+              {/* Onboarding overlay */}
+              {showOnboarding && <Onboarding onDone={() => setShowOnboarding(false)} />}
+
+              {/* Time-of-day tint */}
+              {!dark && timeTint !== "transparent" && (
+                <div style={{ position: "absolute", inset: 0, background: timeTint, pointerEvents: "none", zIndex: 1, borderRadius: 7 }} />
+              )}
               {rally ? (
                 <DebateGame onDone={endRally} name={pet.name} faceSize={fs} gender={pet.gender} />
               ) : view === "kirkify" ? (
@@ -1834,7 +1928,15 @@ window.Kirkogotchi = function Kirkogotchi() {
                     />
                   )}
                   <div style={{ textAlign: "center", padding: "6px 0 2px" }}>
-                    <div style={{ fontSize: 13, color: dark ? "#8a9abc" : "#1a3a6a", fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>{pet.name}</div>
+                    <div style={{ fontSize: 13, color: dark ? "#8a9abc" : "#1a3a6a", fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>
+                      {pet.name}
+                      {pet.alive && <span style={{
+                        fontSize: 10,
+                        marginLeft: 4,
+                        color: overallHealth > 70 ? "#22c55e" : overallHealth > 40 ? "#f59e0b" : "#ef4444",
+                        animation: critical ? "pulse 0.6s infinite" : "none",
+                      }}>{overallHealth > 70 ? "❤️" : overallHealth > 40 ? "💛" : "💔"}</span>}
+                    </div>
                     <div style={{ fontSize: 6, color: dark ? "#5a6a8a" : "#1a3a6a88", fontFamily: "'Press Start 2P',monospace" }}>
                       {pet.alive ? (STAGES[stage] ? STAGES[stage].label : stage) + " · " + Math.floor(pet.age / 60) + "m" : "† IN VALHALLA †"}
                     </div>
@@ -1875,7 +1977,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                         </rect>
                       )}
                       <g transform="translate(50, 38)">
-                        <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} gender={pet.gender} blink={blinking} />
+                        <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} gender={pet.gender} blink={blinking} energy={pet.energy} hunger={pet.hunger} />
                       </g>
                       {mood === "sleep" && (
                         <g>
@@ -1884,7 +1986,20 @@ window.Kirkogotchi = function Kirkogotchi() {
                           <text x="85" y="14" fontSize="10" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame >= 2 ? 0.3 : 0.4}>Z</text>
                         </g>
                       )}
-                      {poops.map(p => <text key={p.id} x={p.x} y={p.y} fontSize="6">💩</text>)}
+                      {poops.map((p, i) => (
+                      <g key={p.id}>
+                        <text x={p.x} y={p.y} fontSize="6">💩</text>
+                        {/* Flies on poops */}
+                        {i < 3 && (
+                          <g>
+                            <text x={p.x + Math.sin(frame * 0.8 + i) * 4} y={p.y - 5 + Math.cos(frame * 0.6 + i) * 2} fontSize="3" opacity={0.6}>🪰</text>
+                          </g>
+                        )}
+                        {/* Stink lines */}
+                        <line x1={p.x - 1} y1={p.y - 6} x2={p.x - 2} y2={p.y - 10} stroke="#8a8a3a" strokeWidth={0.3} opacity={0.3 + (frame % 2) * 0.15} />
+                        <line x1={p.x + 2} y1={p.y - 6} x2={p.x + 3} y2={p.y - 9} stroke="#8a8a3a" strokeWidth={0.3} opacity={0.2 + (frame % 2) * 0.15} />
+                      </g>
+                    ))}
                       {particles.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={1.2} fill={p.c} opacity={p.l / p.ml} />)}
                     </svg>
                   </div>
@@ -1898,14 +2013,32 @@ window.Kirkogotchi = function Kirkogotchi() {
 
                   {displayMsg && pet.alive && (
                     <div style={{
-                      position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)",
-                      background: msg ? "#1a3a6aee" : "#1a3a6acc",
-                      color: "#fff", padding: "4px 12px", borderRadius: 6,
-                      fontSize: 7, fontFamily: "'Press Start 2P',monospace",
-                      whiteSpace: "nowrap", maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis",
-                      boxShadow: "0 2px 10px #0005",
-                      animation: "slideUp 0.2s ease-out",
-                    }}>{displayMsg}</div>
+                      position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)",
+                      animation: "popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                      zIndex: 10,
+                    }}>
+                      <div style={{
+                        background: msg ? "#fff" : "#fffd",
+                        color: "#1a3a6a",
+                        padding: "5px 12px",
+                        borderRadius: 10,
+                        fontSize: 7, fontFamily: "'Press Start 2P',monospace",
+                        whiteSpace: "nowrap", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis",
+                        boxShadow: "0 3px 12px #0003",
+                        border: "1.5px solid #1a3a6a33",
+                        position: "relative",
+                      }}>
+                        {displayMsg}
+                        {/* Bubble tail */}
+                        <div style={{
+                          position: "absolute", bottom: -6, left: "50%", marginLeft: -5,
+                          width: 0, height: 0,
+                          borderLeft: "5px solid transparent",
+                          borderRight: "5px solid transparent",
+                          borderTop: msg ? "6px solid #fff" : "6px solid #fffd",
+                        }} />
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
@@ -1925,6 +2058,8 @@ window.Kirkogotchi = function Kirkogotchi() {
           {/* Nav */}
           <div style={{ display: "flex", justifyContent: "center", gap: 3, margin: "4px 0" }}>
             {[["pet", "🏠"], ["kirkify", "📸"], ["meme", "📝"], ["log", "📜"], ["ach", "🏆"]].map(function([k, ic]) {
+              const hasNotif = (k === "pet" && view !== "pet" && poops.length > 0) ||
+                               (k === "ach" && achievementQueue.length > 0);
               return (
                 <button
                   key={k}
@@ -1941,10 +2076,21 @@ window.Kirkogotchi = function Kirkogotchi() {
                     fontSize: 18,
                     padding: "2px 14px",
                     cursor: "pointer",
-                    transition: "all 0.12s",
+                    transition: "all 0.15s",
+                    position: "relative",
+                    transform: view === k ? "scale(1.05)" : "scale(1)",
                   }}
                 >
                   {ic}
+                  {hasNotif && (
+                    <div style={{
+                      position: "absolute", top: -2, right: -2,
+                      width: 7, height: 7, borderRadius: "50%",
+                      background: "#ef4444",
+                      boxShadow: "0 0 4px #ef444488",
+                      animation: "pulse 1s infinite",
+                    }} />
+                  )}
                 </button>
               );
             })}
