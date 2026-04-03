@@ -2119,14 +2119,11 @@ window.Kirkogotchi = function Kirkogotchi() {
   const tapKirk = useCallback(() => {
     if (!pet || !pet.alive || rally) return;
     sfxTap();
-    // Cycle background
-    setBgIdx(i => (i + 1) % (KIRKIFY_TEMPLATES.length + 1) - 1); // -1 to length-1
-    // Show reaction
+    doShake();
     const lines = pet.gender === "girl" ? TAP_REACTIONS_GIRL : TAP_REACTIONS;
     setTapReaction(lines[Math.floor(Math.random() * lines.length)]);
-    // Small happiness boost
     setPet(p => ({ ...p, happiness: Math.min(100, p.happiness + 1) }));
-    setTimeout(() => setTapReaction(""), 2000);
+    setTimeout(() => setTapReaction(""), 2500);
   }, [pet, rally]);
 
 
@@ -2181,6 +2178,9 @@ window.Kirkogotchi = function Kirkogotchi() {
   var timeTint = { morning: "#f5deb322", day: "transparent", evening: "#f59e0b15", night: "#1a1a4a22" }[timeOfDay];
   var overallHealth = pet.alive ? Math.round((pet.hunger + pet.happiness + pet.energy + pet.clout) / 4) : 0;
 
+  // Merge OWN into tweet (20% chance of owning when tweeting)
+  // KIRKIFY is now a button that just does the visual effect + bg change
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -2205,32 +2205,9 @@ window.Kirkogotchi = function Kirkogotchi() {
         @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-30px) scale(0.8)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
         @keyframes evolveIn{from{opacity:0;transform:scale(0.3) rotate(-10deg)}to{opacity:1;transform:scale(1) rotate(0)}}
         @keyframes popIn{from{transform:scale(0)}50%{transform:scale(1.15)}to{transform:scale(1)}}
-        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-        @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
         .shell{animation:glow 2.8s ease-in-out infinite}
         .shell-critical{animation:critical 0.8s ease-in-out infinite !important}
-        .view-enter{animation:fadeIn 0.25s ease-out}
-        .pop-in{animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1)}
-        @keyframes floatUp{from{transform:translateY(0);opacity:1}to{transform:translateY(-30px);opacity:0}}
-        @keyframes comboFlash{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
-        .btn-hover:active{transform:scale(0.85) !important;transition:transform 0.06s !important}
       `}</style>
-
-      {/* Stars bg */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none" }}>
-        {Array.from({ length: 25 }, (_, i) => (
-          <div key={i} style={{
-            position: "absolute",
-            left: ((i * 29 + 11) % 100) + "%",
-            top: ((i * 43 + 7) % 100) + "%",
-            width: i % 4 === 0 ? 2.5 : 1.5,
-            height: i % 4 === 0 ? 2.5 : 1.5,
-            background: "#fff",
-            borderRadius: "50%",
-            opacity: 0.12 + Math.sin(i) * 0.1,
-          }} />
-        ))}
-      </div>
 
       {/* Achievement toast */}
       {showingAchievement && (
@@ -2362,56 +2339,16 @@ window.Kirkogotchi = function Kirkogotchi() {
                       onDone={() => setEvolving(null)}
                     />
                   )}
-                  <div style={{ textAlign: "center", padding: "6px 0 2px" }}>
-                    <div style={{ fontSize: 13, color: dark ? "#8a9abc" : "#1a3a6a", fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>
-                      {pet.name}
-                      {pet.alive && <span style={{
-                        fontSize: 10,
-                        marginLeft: 4,
-                        color: overallHealth > 70 ? "#22c55e" : overallHealth > 40 ? "#f59e0b" : "#ef4444",
-                        animation: critical ? "pulse 0.6s infinite" : "none",
-                      }}>{overallHealth > 70 ? "❤️" : overallHealth > 40 ? "💛" : "💔"}</span>}
-                    </div>
-                    <div style={{ fontSize: 6, color: dark ? "#5a6a8a" : "#1a3a6a88", fontFamily: "'Press Start 2P',monospace" }}>
-                      {pet.alive ? (STAGES[stage] ? STAGES[stage].label : stage) + " · " + Math.floor(pet.age / 60) + "m" : "† IN VALHALLA †"}
-                    </div>
-                    {/* XP bar to next stage */}
-                    {pet.alive && stage !== "adult" && (() => {
-                      const stages = ["egg", "baby", "child", "teen", "adult"];
-                      const thresholds = [0, 35, 120, 300, 600];
-                      const idx = stages.indexOf(stage);
-                      const current = pet.age - thresholds[idx];
-                      const needed = thresholds[idx + 1] - thresholds[idx];
-                      const pct = Math.min(100, (current / needed) * 100);
-                      const nextLabel = STAGES[stages[idx + 1]] ? STAGES[stages[idx + 1]].label : "";
-                      return (
-                        <div style={{ margin: "3px auto 0", width: "75%" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 1 }}>
-                            <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: dark ? "#5a6a8a" : "#1a3a6a66" }}>→ {nextLabel}</span>
-                            <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: dark ? "#5a6a8a" : "#1a3a6a44" }}>{Math.round(pct)}%</span>
-                          </div>
-                          <div style={{ height: 4, background: dark ? "#1a2a45" : "#1a3a6a22", borderRadius: 3, overflow: "hidden" }}>
-                            <div style={{
-                              height: "100%", width: pct + "%",
-                              background: "linear-gradient(90deg, #c41e3a, #f59e0b)",
-                              borderRadius: 3,
-                              transition: "width 1s ease",
-                              boxShadow: pct > 80 ? "0 0 6px #f59e0b66" : "none",
-                            }} />
-                          </div>
-                        </div>
-                      );
-                    })()}
+                  {/* Pet name + stage compact header */}
+                  <div style={{ textAlign: "center", padding: "4px 0 0" }}>
+                    <span style={{ fontSize: 12, color: dark ? "#8a9abc" : "#1a3a6a", fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>{pet.name}</span>
+                    {pet.alive && <span style={{ fontSize: 6, color: dark ? "#5a6a8a" : "#1a3a6a88", fontFamily: "'Press Start 2P',monospace", marginLeft: 6 }}>
+                      {STAGES[stage] ? STAGES[stage].label : stage}
+                    </span>}
                   </div>
 
                   {/* Tappable Kirk area */}
                   <div onClick={tapKirk} style={{ cursor: "pointer", position: "relative" }}>
-                    {/* Background scene from Kirkify templates */}
-                    {bgIdx >= 0 && bgIdx < KIRKIFY_TEMPLATES.length ? (
-                      <div style={{ position: "absolute", inset: 0, opacity: 0.2, pointerEvents: "none", borderRadius: 4, overflow: "hidden" }}>
-                        {KIRKIFY_TEMPLATES[bgIdx].render(fs, frame)}
-                      </div>
-                    ) : null}
                     <svg viewBox="0 0 100 90" style={{ display: "block", width: "100%", maxHeight: 110, position: "relative" }}>
                       {evolveFlash && (
                         <rect width="100" height="90" fill="#fff" opacity={0.4}>
@@ -2461,13 +2398,6 @@ window.Kirkogotchi = function Kirkogotchi() {
                           <animate attributeName="y" from="30" to="5" dur="1s" fill="freeze" />
                           <animate attributeName="opacity" from="1" to="0" dur="1.2s" fill="freeze" />
                           {floatingEmoji.emoji}
-                        </text>
-                      )}
-
-                      {/* Combo indicator */}
-                      {combo > 1 && (
-                        <text x="88" y="12" fontSize="7" fontFamily="'Bangers',cursive" fill="#f59e0b" textAnchor="end" opacity="0.8">
-                          {combo}x!
                         </text>
                       )}
                       {mood === "sleep" && (
@@ -2545,13 +2475,27 @@ window.Kirkogotchi = function Kirkogotchi() {
             </div>
           </div>
 
-          {/* Stat bars */}
+          {/* Stat bars — compact single strip */}
           {pet.alive && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 8px", margin: "4px 6px" }}>
-              <Bar icon="🍔" value={pet.hunger} color="#c41e3a" warn={pet.hunger < 20} />
-              <Bar icon="⭐" value={pet.happiness} color="#d97706" warn={pet.happiness < 20} />
-              <Bar icon="⚡" value={pet.energy} color="#2563eb" warn={pet.energy < 15} />
-              <Bar icon="📢" value={pet.clout} color="#7c3aed" warn={pet.clout < 20} />
+            <div style={{ display: "flex", gap: 2, padding: "3px 6px" }}>
+              {[
+                ["🍔", pet.hunger, "#c41e3a", pet.hunger < 20],
+                ["⭐", pet.happiness, "#d97706", pet.happiness < 20],
+                ["⚡", pet.energy, "#2563eb", pet.energy < 15],
+                ["📢", pet.clout, "#7c3aed", pet.clout < 20],
+              ].map(([icon, val, color, warn]) => (
+                <div key={icon} style={{ flex: 1, display: "flex", alignItems: "center", gap: 2 }}>
+                  <span style={{ fontSize: 9, animation: warn ? "pulse 0.6s infinite" : "none" }}>{icon}</span>
+                  <div style={{ flex: 1, height: 6, background: "#fff1", borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{
+                      height: "100%", width: Math.max(0, val) + "%",
+                      background: val < 20 ? "#ef4444" : color,
+                      borderRadius: 3,
+                      transition: "width 0.5s ease",
+                    }} />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -2600,46 +2544,26 @@ window.Kirkogotchi = function Kirkogotchi() {
             })}
           </div>
 
-          {/* Action buttons */}
+          {/* Action buttons — clean 4-button layout */}
           {pet.alive ? (
-            <div>
-              {/* Main actions */}
-              <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4 }}>
+            <div style={{ padding: "4px 6px 6px" }}>
+              <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
                 <ABtn label="FEED" emoji="🍔" bg="#c41e3a" onClick={() => doAction("feed")} off={!!act || rally} />
                 <ABtn label="TWEET" emoji="📱" bg="#1da1f2" onClick={() => doAction("tweet")} off={!!act || rally} />
                 <ABtn label="DEBATE" emoji="🎤" bg="#7c3aed" onClick={() => doAction("rally")} off={!!act || rally} />
-                <ABtn label="OWN" emoji="💥" bg="#dc2626" onClick={() => doAction("own")} off={!!act || rally} />
-                <ABtn label="KIRKIFY" emoji="👤" bg="#f59e0b" onClick={() => doAction("kirkify")} off={!!act || rally} />
+                <ABtn label={lightsOff ? "WAKE" : "SLEEP"} emoji={lightsOff ? "☀️" : "🌙"} bg="#334155" onClick={() => doAction("light")} off={!!act || rally} />
               </div>
-              {/* Utility row */}
-              <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4, alignItems: "center" }}>
-                <div style={{ position: "relative" }}>
-                  <ABtn label="CLEAN" emoji="🧹" bg="#3b82f6" onClick={() => doAction("clean")} off={!!act || rally || poops.length === 0} sm />
-                  {poops.length > 0 && (
-                    <div style={{
-                      position: "absolute", top: -2, right: -2,
-                      background: "#ef4444", borderRadius: "50%",
-                      width: 14, height: 14, fontSize: 8, color: "#fff",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontFamily: "'Bangers',cursive",
-                      boxShadow: "0 1px 3px #0005",
-                      animation: "pulse 1s infinite",
-                    }}>{poops.length}</div>
-                  )}
-                </div>
-                <ABtn label={lightsOff ? "ON" : "OFF"} emoji={lightsOff ? "☀️" : "🌙"} bg="#334155" onClick={() => doAction("light")} off={!!act || rally} sm />
-                <ABtn label={muted ? "🔇" : "🔊"} emoji="" bg="#334155" onClick={() => { const m = !muted; setMuted(m); setGlobalMute(m); }} sm />
+              {/* Contextual row — only shows when needed */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 4 }}>
+                {poops.length > 0 && (
+                  <ABtn label={"CLEAN " + poops.length} emoji="🧹" bg="#3b82f6" onClick={() => doAction("clean")} off={!!act || rally} sm />
+                )}
+                <ABtn label="OWN" emoji="💥" bg="#dc2626" onClick={() => doAction("own")} off={!!act || rally} sm />
               </div>
             </div>
           ) : (
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
+            <div style={{ display: "flex", justifyContent: "center", padding: "8px 6px" }}>
               <ABtn label="NEW KIRKIE" emoji="🇺🇸" bg="#c41e3a" onClick={reset} />
-            </div>
-          )}
-
-          {pet.alive && (
-            <div style={{ textAlign: "center", marginTop: 4 }}>
-              <button onClick={reset} style={{ background: "none", border: "none", color: "#fff2", fontSize: 7, fontFamily: "'Bangers',cursive", cursor: "pointer", letterSpacing: 1 }}>RESET</button>
             </div>
           )}
         </div>
