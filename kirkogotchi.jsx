@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+const { useState, useEffect, useCallback, useRef } = React;
 
 // ═══ CONFIG ═══
 const STAGES = {
@@ -376,7 +376,7 @@ function mkParticles(cx, cy, color) {
 }
 
 // ═══ MAIN APP ═══
-export default function Kirkogotchi() {
+window.Kirkogotchi = function Kirkogotchi() {
   const [pet, setPet] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [frame, setFrame] = useState(0);
