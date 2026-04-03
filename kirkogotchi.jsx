@@ -460,6 +460,7 @@ function DebateGame({ onDone, name, faceSize }) {
   const [t, setT] = useState(15);
   const [fx, setFx] = useState([]);
   const [shakeKirk, setShakeKirk] = useState(false);
+  const [hitFlash, setHitFlash] = useState(false);
   const fc = useRef(0);
   const done = useRef(false);
 
@@ -501,7 +502,8 @@ function DebateGame({ onDone, name, faceSize }) {
             // Hit Kirk!
             setMisses(m => m + 1);
             setShakeKirk(true);
-            setTimeout(() => setShakeKirk(false), 100);
+            setHitFlash(true);
+            setTimeout(() => { setShakeKirk(false); setHitFlash(false); }, 150);
           } else {
             next.push(nb);
           }
@@ -525,7 +527,7 @@ function DebateGame({ onDone, name, faceSize }) {
 
   return (
     <div style={{ background: "#0d2240", borderRadius: 8, overflow: "hidden", touchAction: "none" }}>
-      <svg viewBox="0 0 200 130" style={{ display: "block", width: "100%" }}>
+      <svg viewBox="0 0 200 130" style={{ display: "block", width: "100%", transition: "transform 0.05s", transform: shakeKirk ? "translateX(2px)" : "none" }}>
         <rect width="200" height="130" fill="#dce8f5" />
         {/* Header */}
         <rect width="200" height="20" fill="#1a3a6a" />
@@ -534,6 +536,8 @@ function DebateGame({ onDone, name, faceSize }) {
         {/* Timer bar */}
         <rect x="0" y="20" width={200 * t / 15} height="2.5" fill="#c41e3a" />
 
+        {/* Hit flash */}
+        {hitFlash && <rect width="200" height="130" fill="#ef444433" />}
         {/* Kirk at podium */}
         <g transform={shakeKirk ? "translate(22, 72) rotate(3)" : "translate(22, 72)"}>
           <rect x={-8} y={10} width={16} height={20} rx={2} fill="#5a3a1a" />
@@ -1243,7 +1247,10 @@ window.Kirkogotchi = function Kirkogotchi() {
         @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
         @keyframes glow{0%,100%{box-shadow:0 8px 32px #0008,0 0 0 2px #8b1525,0 0 16px #c41e3a18}50%{box-shadow:0 8px 32px #0008,0 0 0 2px #8b1525,0 0 28px #c41e3a33}}
         @keyframes kf{0%{filter:invert(1) hue-rotate(180deg) saturate(2)}100%{filter:none}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         .shell{animation:glow 2.8s ease-in-out infinite}
+        .view-enter{animation:fadeIn 0.25s ease-out}
       `}</style>
 
       {/* Stars bg */}
@@ -1349,7 +1356,15 @@ window.Kirkogotchi = function Kirkogotchi() {
                   )}
 
                   {displayMsg && pet.alive && (
-                    <div style={{ position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)", background: "#1a3a6aee", color: "#fff", padding: "4px 12px", borderRadius: 6, fontSize: 7, fontFamily: "'Press Start 2P',monospace", whiteSpace: "nowrap", maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis", boxShadow: "0 2px 10px #0005" }}>{displayMsg}</div>
+                    <div style={{
+                      position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)",
+                      background: msg ? "#1a3a6aee" : "#1a3a6acc",
+                      color: "#fff", padding: "4px 12px", borderRadius: 6,
+                      fontSize: 7, fontFamily: "'Press Start 2P',monospace",
+                      whiteSpace: "nowrap", maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis",
+                      boxShadow: "0 2px 10px #0005",
+                      animation: "slideUp 0.2s ease-out",
+                    }}>{displayMsg}</div>
                   )}
                 </div>
               )}
@@ -1418,21 +1433,40 @@ window.Kirkogotchi = function Kirkogotchi() {
           </div>
 
           {/* Action buttons */}
-          <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 4, flexWrap: "wrap" }}>
-            {pet.alive ? (
-              <>
+          {pet.alive ? (
+            <div>
+              {/* Main actions */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4 }}>
                 <ABtn label="FEED" emoji="🍔" bg="#c41e3a" onClick={() => doAction("feed")} off={!!act || rally} />
                 <ABtn label="TWEET" emoji="📱" bg="#1da1f2" onClick={() => doAction("tweet")} off={!!act || rally} />
-                <ABtn label="CLEAN" emoji="🧹" bg="#3b82f6" onClick={() => doAction("clean")} off={!!act || rally || poops.length === 0} />
                 <ABtn label="DEBATE" emoji="🎤" bg="#7c3aed" onClick={() => doAction("rally")} off={!!act || rally} />
                 <ABtn label="OWN" emoji="💥" bg="#dc2626" onClick={() => doAction("own")} off={!!act || rally} />
                 <ABtn label="KIRKIFY" emoji="👤" bg="#f59e0b" onClick={() => doAction("kirkify")} off={!!act || rally} />
-                <ABtn label={lightsOff ? "☀️" : "🌙"} emoji="" bg="#334155" onClick={() => doAction("light")} off={!!act || rally} sm />
-              </>
-            ) : (
+              </div>
+              {/* Utility row */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 4, alignItems: "center" }}>
+                <div style={{ position: "relative" }}>
+                  <ABtn label="CLEAN" emoji="🧹" bg="#3b82f6" onClick={() => doAction("clean")} off={!!act || rally || poops.length === 0} sm />
+                  {poops.length > 0 && (
+                    <div style={{
+                      position: "absolute", top: -2, right: -2,
+                      background: "#ef4444", borderRadius: "50%",
+                      width: 14, height: 14, fontSize: 8, color: "#fff",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: "'Bangers',cursive",
+                      boxShadow: "0 1px 3px #0005",
+                      animation: "pulse 1s infinite",
+                    }}>{poops.length}</div>
+                  )}
+                </div>
+                <ABtn label={lightsOff ? "ON" : "OFF"} emoji={lightsOff ? "☀️" : "🌙"} bg="#334155" onClick={() => doAction("light")} off={!!act || rally} sm />
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
               <ABtn label="NEW KIRK" emoji="🇺🇸" bg="#c41e3a" onClick={reset} />
-            )}
-          </div>
+            </div>
+          )}
 
           {pet.alive && (
             <div style={{ textAlign: "center", marginTop: 4 }}>
