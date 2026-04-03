@@ -1,4 +1,4 @@
-const CACHE = 'kirk-bot-v2';
+const CACHE = 'kirk-bot-v3';
 const ASSETS = ['index.html', 'manifest.json', 'kirkogotchi.jsx'];
 
 self.addEventListener('install', e => {

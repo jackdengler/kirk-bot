@@ -154,6 +154,37 @@ const NEGLECT_LINES = {
   ],
 };
 
+const TAP_REACTIONS = [
+  "Hey! Personal space!",
+  "Do NOT boop me.",
+  "I'm trying to WORK here",
+  "Curious. You tapped me. 🤔",
+  "Stop that! I'm on camera!",
+  "That tickles... STOP.",
+  "My face is up here. (It's small.)",
+  "I will tweet about this.",
+  "You just poked a PATRIOT",
+  "Heh. Do it again.",
+  "*adjusts tie*",
+  "I'm not a touchscreen! Oh wait.",
+  "Based tap.",
+  "That's harassment. (I liked it.)",
+  "You call that a tap? LOW ENERGY.",
+];
+
+const TAP_REACTIONS_GIRL = [
+  "Excuse me??",
+  "Don't tap the Kirkie!",
+  "I'm posting about this.",
+  "Rude but also funny",
+  "*hair flip*",
+  "My husband will hear about this",
+  "I have a PODCAST you know",
+  "Based tap, I guess",
+  "That's not very patriotic of you",
+  "Do I look like a button to you?",
+];
+
 const MEMORIAL_QUOTES = [
   "He tweeted so we didn't have to.",
   '"His face was the perfect size." — God',
@@ -291,24 +322,30 @@ const storage = {
 };
 
 // ═══ KIRK FACE ═══
-function Kirk({ stage, mood, faceSize, frame, dark, scale }) {
+function Kirk({ stage, mood, faceSize, frame, dark, scale, gender, blink }) {
   const s = scale || 1;
+  const isGirl = gender === "girl";
   const skin = dark ? "#9a8a70" : "#f4d0a8";
   const skinSh = dark ? "#7a6a50" : "#e8b888";
-  const hair = dark ? "#1a0e04" : "#3d1f08";
+  const hair = dark ? (isGirl ? "#1a0e14" : "#1a0e04") : (isGirl ? "#5a2a18" : "#3d1f08");
   const outline = dark ? "#1a2a45" : "#14325a";
   const blush = dark ? "#a07060" : "#f0a8a0";
-  const suitC = dark ? "#0a1830" : "#1a3a6a";
+  const suitC = dark ? "#0a1830" : (isGirl ? "#8b1545" : "#1a3a6a");
   const shirtC = dark ? "#888" : "#f0f0f0";
+  const lipColor = isGirl ? "#c06068" : "#c06058";
+  const gumColor = "#e89090";
 
   const hr = (STAGES[stage] || STAGES.baby).head;
   const R = hr * s;
   const fs = Math.max(0.2, Math.min(1.6, faceSize || 1));
-  const bob = [0, -0.5, -1, -0.5][(frame || 0) % 4] * s;
+  // Ambient breathing + bob
+  const breathe = Math.sin((frame || 0) * 0.8) * 0.3 * s;
+  const bob = [0, -0.5, -1, -0.5][(frame || 0) % 4] * s + breathe;
   const isEgg = stage === "egg";
   const isDead = mood === "dead";
   const isSleep = mood === "sleep";
   const hasSuit = stage === "teen" || stage === "adult";
+  const isBlinking = blink;
 
   return (
     <g transform={"translate(0," + bob + ")"}>
@@ -349,8 +386,23 @@ function Kirk({ stage, mood, faceSize, frame, dark, scale }) {
       ) : (
         <g>
           {!isDead && <ellipse cx={0} cy={-R * 0.32} rx={R * 1.06} ry={R * 0.72} fill={hair} />}
-          {!isDead && (
+          {!isDead && !isGirl && (
             <path d={"M " + (-R * 0.65) + " " + (-R * 0.82) + " Q " + (-R * 1.15) + " " + (-R * 1.45) + " " + (-R * 0.15) + " " + (-R * 1.02) + " Q " + (-R * 0.55) + " " + (-R * 1.3) + " " + (-R * 0.75) + " " + (-R * 0.88)} fill={hair} />
+          )}
+          {/* Girl: longer hair flowing down + bow */}
+          {!isDead && isGirl && (
+            <g>
+              <path d={"M " + (-R * 0.65) + " " + (-R * 0.82) + " Q " + (-R * 1.15) + " " + (-R * 1.35) + " " + (-R * 0.15) + " " + (-R * 1.02) + " Q " + (-R * 0.55) + " " + (-R * 1.2) + " " + (-R * 0.75) + " " + (-R * 0.88)} fill={hair} />
+              {/* Long hair sides */}
+              <path d={"M " + (-R * 0.95) + " " + (-R * 0.2) + " Q " + (-R * 1.3) + " " + (R * 0.5) + " " + (-R * 1.1) + " " + (R * 1.2)} fill={hair} stroke={hair} strokeWidth={3 * s} strokeLinecap="round" />
+              <path d={"M " + (R * 0.95) + " " + (-R * 0.2) + " Q " + (R * 1.3) + " " + (R * 0.5) + " " + (R * 1.1) + " " + (R * 1.2)} fill={hair} stroke={hair} strokeWidth={3 * s} strokeLinecap="round" />
+              {/* Bow */}
+              <g transform={"translate(" + (R * 0.6) + "," + (-R * 0.85) + ")"}>
+                <path d={"M 0 0 Q " + (3 * s) + " " + (-3 * s) + " " + (5 * s) + " 0 Q " + (3 * s) + " " + (3 * s) + " 0 0"} fill="#ff69b4" />
+                <path d={"M 0 0 Q " + (-3 * s) + " " + (-3 * s) + " " + (-5 * s) + " 0 Q " + (-3 * s) + " " + (3 * s) + " 0 0"} fill="#ff69b4" />
+                <circle r={1.2 * s} fill="#c41e6a" />
+              </g>
+            </g>
           )}
           {!isDead && (
             <g>
@@ -378,25 +430,60 @@ function Kirk({ stage, mood, faceSize, frame, dark, scale }) {
               </g>
             ) : (
               <g>
-                <ellipse cx={-5 * s} cy={-4 * s} rx={2.2 * s} ry={2.2 * s} fill={outline} />
-                <ellipse cx={5 * s} cy={-4 * s} rx={2.2 * s} ry={2.2 * s} fill={outline} />
-                <circle cx={-4 * s} cy={-5 * s} r={0.8 * s} fill="#fff" opacity={0.6} />
-                <circle cx={6 * s} cy={-5 * s} r={0.8 * s} fill="#fff" opacity={0.6} />
+                {/* Eyes — with blink */}
+                {isBlinking ? (
+                  <g>
+                    <line x1={-7 * s} y1={-4 * s} x2={-3 * s} y2={-4 * s} stroke={outline} strokeWidth={1.5 * s} strokeLinecap="round" />
+                    <line x1={3 * s} y1={-4 * s} x2={7 * s} y2={-4 * s} stroke={outline} strokeWidth={1.5 * s} strokeLinecap="round" />
+                  </g>
+                ) : (
+                  <g>
+                    <ellipse cx={-5 * s} cy={-4 * s} rx={2.2 * s} ry={2.2 * s} fill={outline} />
+                    <ellipse cx={5 * s} cy={-4 * s} rx={2.2 * s} ry={2.2 * s} fill={outline} />
+                    <circle cx={-4 * s} cy={-5 * s} r={0.8 * s} fill="#fff" opacity={0.6} />
+                    <circle cx={6 * s} cy={-5 * s} r={0.8 * s} fill="#fff" opacity={0.6} />
+                  </g>
+                )}
+                {/* Eyelashes for girl */}
+                {isGirl && !isBlinking && (
+                  <g>
+                    <line x1={-7.5 * s} y1={-5.5 * s} x2={-8.5 * s} y2={-7 * s} stroke={outline} strokeWidth={0.8 * s} strokeLinecap="round" />
+                    <line x1={-5 * s} y1={-6.5 * s} x2={-5 * s} y2={-8 * s} stroke={outline} strokeWidth={0.8 * s} strokeLinecap="round" />
+                    <line x1={7.5 * s} y1={-5.5 * s} x2={8.5 * s} y2={-7 * s} stroke={outline} strokeWidth={0.8 * s} strokeLinecap="round" />
+                    <line x1={5 * s} y1={-6.5 * s} x2={5 * s} y2={-8 * s} stroke={outline} strokeWidth={0.8 * s} strokeLinecap="round" />
+                  </g>
+                )}
                 <ellipse cx={0} cy={0} rx={1.2 * s} ry={1.8 * s} fill={skinSh} opacity={0.2} />
                 {mood === "happy" ? (
-                  <path d={"M " + (-5 * s) + " " + (4 * s) + " Q 0 " + (10 * s) + " " + (5 * s) + " " + (4 * s)} fill="#c06058" stroke={outline} strokeWidth={0.6 * s} />
+                  <g>
+                    {/* GUMMY SMILE — big open mouth with teeth and gums */}
+                    <path d={"M " + (-6 * s) + " " + (3 * s) + " Q 0 " + (12 * s) + " " + (6 * s) + " " + (3 * s)} fill={lipColor} stroke={outline} strokeWidth={0.6 * s} />
+                    {/* Gums — pink strip at top of mouth */}
+                    <path d={"M " + (-5 * s) + " " + (4.5 * s) + " Q 0 " + (3.5 * s) + " " + (5 * s) + " " + (4.5 * s)} fill={gumColor} />
+                    {/* Teeth — white rectangles */}
+                    <rect x={-4 * s} y={4 * s} width={1.8 * s} height={2 * s} rx={0.3 * s} fill="#fff" />
+                    <rect x={-1.8 * s} y={3.8 * s} width={1.8 * s} height={2.2 * s} rx={0.3 * s} fill="#fff" />
+                    <rect x={0.3 * s} y={3.8 * s} width={1.8 * s} height={2.2 * s} rx={0.3 * s} fill="#fff" />
+                    <rect x={2.5 * s} y={4 * s} width={1.8 * s} height={2 * s} rx={0.3 * s} fill="#fff" />
+                    {/* Tongue hint */}
+                    <ellipse cx={0} cy={8 * s} rx={2.5 * s} ry={1.5 * s} fill="#d06060" opacity={0.6} />
+                  </g>
                 ) : mood === "sad" ? (
                   <path d={"M " + (-4 * s) + " " + (7 * s) + " Q 0 " + (3 * s) + " " + (4 * s) + " " + (7 * s)} fill="none" stroke={outline} strokeWidth={1.2 * s} strokeLinecap="round" />
                 ) : mood === "angry" ? (
                   <g>
                     <line x1={-8 * s} y1={-8.5 * s} x2={-2 * s} y2={-6.5 * s} stroke={outline} strokeWidth={1.5 * s} strokeLinecap="round" />
                     <line x1={8 * s} y1={-8.5 * s} x2={2 * s} y2={-6.5 * s} stroke={outline} strokeWidth={1.5 * s} strokeLinecap="round" />
-                    <path d={"M " + (-5 * s) + " " + (4 * s) + " Q 0 " + (9 * s) + " " + (5 * s) + " " + (4 * s)} fill="#c06058" stroke={outline} strokeWidth={0.6 * s} />
+                    {/* Angry gummy smile */}
+                    <path d={"M " + (-5 * s) + " " + (3.5 * s) + " Q 0 " + (10 * s) + " " + (5 * s) + " " + (3.5 * s)} fill={lipColor} stroke={outline} strokeWidth={0.6 * s} />
+                    <rect x={-3.5 * s} y={4 * s} width={1.6 * s} height={1.8 * s} rx={0.3 * s} fill="#fff" />
+                    <rect x={-1 * s} y={3.8 * s} width={1.6 * s} height={2 * s} rx={0.3 * s} fill="#fff" />
+                    <rect x={1.5 * s} y={4 * s} width={1.6 * s} height={1.8 * s} rx={0.3 * s} fill="#fff" />
                   </g>
                 ) : (
                   <line x1={-3 * s} y1={5 * s} x2={3 * s} y2={5 * s} stroke={outline} strokeWidth={1.2 * s} strokeLinecap="round" />
                 )}
-                {mood === "happy" && (
+                {(mood === "happy" || mood === "angry") && (
                   <g>
                     <ellipse cx={-8 * s} cy={2 * s} rx={3 * s} ry={1.5 * s} fill={blush} opacity={0.25} />
                     <ellipse cx={8 * s} cy={2 * s} rx={3 * s} ry={1.5 * s} fill={blush} opacity={0.25} />
@@ -493,7 +580,7 @@ const DEBATE_ARGS = [
   "ACAB!", "gentrified", "billionaires", "boot licker", "comrade!",
 ];
 
-function DebateGame({ onDone, name, faceSize }) {
+function DebateGame({ onDone, name, faceSize, gender }) {
   const [bubbles, setBubbles] = useState([]);
   const [sc, setSc] = useState(0);
   const [misses, setMisses] = useState(0);
@@ -583,7 +670,7 @@ function DebateGame({ onDone, name, faceSize }) {
         <g transform={shakeKirk ? "translate(22, 72) rotate(3)" : "translate(22, 72)"}>
           <rect x={-8} y={10} width={16} height={20} rx={2} fill="#5a3a1a" />
           <rect x={-10} y={10} width={20} height={3} rx={1} fill="#7a5a3a" />
-          <Kirk stage="adult" mood="angry" faceSize={faceSize} scale={0.32} frame={fc.current % 4} />
+          <Kirk stage="adult" mood="angry" faceSize={faceSize} scale={0.32} frame={fc.current % 4} gender={gender} />
         </g>
 
         {/* Bubbles */}
@@ -615,7 +702,7 @@ function DebateGame({ onDone, name, faceSize }) {
 }
 
 // ═══ MEMORIAL SCREEN ═══
-function MemorialScreen({ pet, stats, onReset, frame }) {
+function MemorialScreen({ pet, stats, onReset, frame, gender }) {
   const [showBtn, setShowBtn] = useState(false);
   const [musicStarted, setMusicStarted] = useState(false);
 
@@ -667,7 +754,7 @@ function MemorialScreen({ pet, stats, onReset, frame }) {
         {/* Kirk portrait */}
         <circle cx="100" cy="52" r="18" fill="#1a3a6a33" stroke="#c41e3a44" strokeWidth="1" />
         <g transform="translate(100, 50)">
-          <Kirk stage={stageOf(pet.age)} mood="dead" faceSize={1} frame={frame} scale={0.55} />
+          <Kirk stage={stageOf(pet.age)} mood="dead" faceSize={1} frame={frame} scale={0.55} gender={gender} />
         </g>
 
         {/* Name */}
@@ -732,10 +819,10 @@ function MemorialScreen({ pet, stats, onReset, frame }) {
               boxShadow: "0 2px 8px #0008",
             }}
           >
-            🇺🇸 HATCH ANOTHER
+            🇺🇸 HATCH ANOTHER KIRKIE
           </button>
           <div style={{ fontSize: 8, color: "#fff3", fontFamily: "'Press Start 2P',monospace", marginTop: 4 }}>
-            Kirks hatched: {hatched}
+            Kirkies hatched: {hatched}
           </div>
         </div>
       )}
@@ -960,20 +1047,29 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [idleMsg, setIdleMsg] = useState("");
   const [stats, setStats] = useState({ tweets: 0, libsOwned: 0 });
   const [showMemorial, setShowMemorial] = useState(false);
+  const [blinking, setBlinking] = useState(false);
+  const [bgIdx, setBgIdx] = useState(-1); // -1 = default bg, 0+ = kirkify bg
+  const [tapReaction, setTapReaction] = useState("");
   const poopsRef = useRef([]);
 
   // Load saved data (with v6 migration)
   useEffect(() => {
-    var d = storage.get("kirk_v7");
+    var d = storage.get("kirk_v8");
     if (!d) {
-      // Try migrating from old format
+      // Try migrating from old formats
       try {
-        const old = localStorage.getItem("kirk_v6");
+        var old = storage.get("kirk_v7") || storage.get("kirk_v6");
+        if (!old) {
+          const raw = localStorage.getItem("kirk_v6") || localStorage.getItem("kirk_v7");
+          if (raw) old = JSON.parse(raw);
+        }
         if (old) {
-          const parsed = JSON.parse(old);
-          d = { p: parsed.p, pp: parsed.pp, lg: parsed.lg, fs: 1.0, st: { tweets: 0, libsOwned: 0 } };
-          storage.set("kirk_v7", d);
+          var p = old.p || null;
+          if (p && !p.gender) p.gender = "boy"; // default old saves to boy
+          d = { p, pp: old.pp, lg: old.lg, fs: old.fs || 1.0, st: old.st || { tweets: 0, libsOwned: 0 } };
+          storage.set("kirk_v8", d);
           localStorage.removeItem("kirk_v6");
+          localStorage.removeItem("kirk_v7");
         }
       } catch(e) {}
     }
@@ -989,7 +1085,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   }, []);
 
   const save = useCallback((p, pp, lg, fs, st) => {
-    storage.set("kirk_v7", { p, pp: pp || [], lg: lg || [], fs: fs != null ? fs : 1.0, st: st || { tweets: 0, libsOwned: 0 } });
+    storage.set("kirk_v8", { p, pp: pp || [], lg: lg || [], fs: fs != null ? fs : 1.0, st: st || { tweets: 0, libsOwned: 0 } });
   }, []);
 
   // Keep poops ref in sync
@@ -1004,6 +1100,17 @@ window.Kirkogotchi = function Kirkogotchi() {
   // Frame animation
   useEffect(() => {
     const iv = setInterval(() => setFrame(f => (f + 1) % 4), 350);
+    return () => clearInterval(iv);
+  }, []);
+
+  // Blink timer
+  useEffect(() => {
+    const iv = setInterval(() => {
+      if (Math.random() < 0.35) {
+        setBlinking(true);
+        setTimeout(() => setBlinking(false), 150);
+      }
+    }, 2800);
     return () => clearInterval(iv);
   }, []);
 
@@ -1245,9 +1352,9 @@ window.Kirkogotchi = function Kirkogotchi() {
     setTimeout(() => setMsg(""), 1500);
   }, [addLog]);
 
-  const createPet = useCallback((name) => {
-    var p = { name: name, hunger: 80, happiness: 80, energy: 100, clout: 70, age: 0, alive: true, born: Date.now() };
-    var lg = [{ t: "🇺🇸 " + name + " joined TPUSA!", d: Date.now() }];
+  const createPet = useCallback((name, gender) => {
+    var p = { name: name, gender: gender || "boy", hunger: 80, happiness: 80, energy: 100, clout: 70, age: 0, alive: true, born: Date.now() };
+    var lg = [{ t: "🇺🇸 " + name + " joined TPUSA! (" + (gender === "girl" ? "Erika mode" : "Kirk mode") + ")", d: Date.now() }];
     var st = { tweets: 0, libsOwned: 0 };
     setPet(p);
     setPoops([]);
@@ -1262,7 +1369,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   }, [save]);
 
   const reset = useCallback(() => {
-    storage.del("kirk_v7");
+    storage.del("kirk_v8");
     setPet(null);
     setPoops([]);
     setLog([]);
@@ -1274,6 +1381,20 @@ window.Kirkogotchi = function Kirkogotchi() {
     setShowMemorial(false);
     setStats({ tweets: 0, libsOwned: 0 });
   }, []);
+
+  // Tap on Kirk
+  const tapKirk = useCallback(() => {
+    if (!pet || !pet.alive || rally) return;
+    sfxTap();
+    // Cycle background
+    setBgIdx(i => (i + 1) % (KIRKIFY_TEMPLATES.length + 1) - 1); // -1 to length-1
+    // Show reaction
+    const lines = pet.gender === "girl" ? TAP_REACTIONS_GIRL : TAP_REACTIONS;
+    setTapReaction(lines[Math.floor(Math.random() * lines.length)]);
+    // Small happiness boost
+    setPet(p => ({ ...p, happiness: Math.min(100, p.happiness + 1) }));
+    setTimeout(() => setTapReaction(""), 2000);
+  }, [pet, rally]);
 
   // Face slider comment
   const [faceComment, setFaceComment] = useState("");
@@ -1318,7 +1439,7 @@ window.Kirkogotchi = function Kirkogotchi() {
       }}>
         <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap" rel="stylesheet" />
         <div style={{ maxWidth: 360, width: "100%" }}>
-          <MemorialScreen pet={pet} stats={stats} onReset={reset} frame={frame} />
+          <MemorialScreen pet={pet} stats={stats} onReset={reset} frame={frame} gender={pet.gender} />
         </div>
       </div>
     );
@@ -1330,7 +1451,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   var mood = !pet.alive ? "dead" : lightsOff ? "sleep" : ov > 70 ? "happy" : ov < 25 ? "sad" : "neutral";
   var fs = faceSlider;
   var dark = lightsOff;
-  var displayMsg = msg || idleMsg;
+  var displayMsg = msg || tapReaction || idleMsg;
   var critical = pet.alive && (pet.hunger < 10 || pet.happiness < 10 || pet.energy < 5);
 
   return (
@@ -1404,7 +1525,7 @@ window.Kirkogotchi = function Kirkogotchi() {
               transform: shake ? "translate(1px,-1px)" : "none",
             }}>
               {rally ? (
-                <DebateGame onDone={endRally} name={pet.name} faceSize={fs} />
+                <DebateGame onDone={endRally} name={pet.name} faceSize={fs} gender={pet.gender} />
               ) : view === "kirkify" ? (
                 <div style={{ borderRadius: 8, overflow: "hidden", cursor: "pointer" }} onClick={() => { setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length); sfxKirkify(); }}>
                   {KIRKIFY_TEMPLATES[kirkifyIdx].render(fs, frame)}
@@ -1442,25 +1563,34 @@ window.Kirkogotchi = function Kirkogotchi() {
                     </div>
                   </div>
 
-                  <svg viewBox="0 0 100 90" style={{ display: "block", width: "100%", maxHeight: 110 }}>
-                    {evolveFlash && (
-                      <rect width="100" height="90" fill="#fff" opacity={0.4}>
-                        <animate attributeName="opacity" from="0.5" to="0" dur="0.6s" fill="freeze" />
-                      </rect>
-                    )}
-                    <g transform="translate(50, 38)">
-                      <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} />
-                    </g>
-                    {mood === "sleep" && (
-                      <g>
-                        <text x="72" y="28" fontSize="5" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame < 2 ? 0.5 : 0.2}>z</text>
-                        <text x="78" y="20" fontSize="8" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame < 2 ? 0.3 : 0.5}>Z</text>
-                        <text x="85" y="14" fontSize="10" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame >= 2 ? 0.3 : 0.4}>Z</text>
+                  {/* Tappable Kirk area */}
+                  <div onClick={tapKirk} style={{ cursor: "pointer", position: "relative" }}>
+                    {/* Background scene from Kirkify templates */}
+                    {bgIdx >= 0 && bgIdx < KIRKIFY_TEMPLATES.length ? (
+                      <div style={{ position: "absolute", inset: 0, opacity: 0.2, pointerEvents: "none", borderRadius: 4, overflow: "hidden" }}>
+                        {KIRKIFY_TEMPLATES[bgIdx].render(fs, frame)}
+                      </div>
+                    ) : null}
+                    <svg viewBox="0 0 100 90" style={{ display: "block", width: "100%", maxHeight: 110, position: "relative" }}>
+                      {evolveFlash && (
+                        <rect width="100" height="90" fill="#fff" opacity={0.4}>
+                          <animate attributeName="opacity" from="0.5" to="0" dur="0.6s" fill="freeze" />
+                        </rect>
+                      )}
+                      <g transform="translate(50, 38)">
+                        <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} gender={pet.gender} blink={blinking} />
                       </g>
-                    )}
-                    {poops.map(p => <text key={p.id} x={p.x} y={p.y} fontSize="6">💩</text>)}
-                    {particles.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={1.2} fill={p.c} opacity={p.l / p.ml} />)}
-                  </svg>
+                      {mood === "sleep" && (
+                        <g>
+                          <text x="72" y="28" fontSize="5" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame < 2 ? 0.5 : 0.2}>z</text>
+                          <text x="78" y="20" fontSize="8" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame < 2 ? 0.3 : 0.5}>Z</text>
+                          <text x="85" y="14" fontSize="10" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame >= 2 ? 0.3 : 0.4}>Z</text>
+                        </g>
+                      )}
+                      {poops.map(p => <text key={p.id} x={p.x} y={p.y} fontSize="6">💩</text>)}
+                      {particles.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={1.2} fill={p.c} opacity={p.l / p.ml} />)}
+                    </svg>
+                  </div>
 
                   {!pet.alive && (
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2240ee", padding: "8px 6px 6px", borderRadius: "0 0 7px 7px", textAlign: "center" }}>
@@ -1520,7 +1650,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
           {/* Nav */}
           <div style={{ display: "flex", justifyContent: "center", gap: 3, margin: "4px 0" }}>
-            {[["pet", "🏠"], ["kirkify", "👤"], ["meme", "📝"], ["log", "📜"]].map(function([k, ic]) {
+            {[["pet", "🏠"], ["kirkify", "📸"], ["meme", "📝"], ["log", "📜"]].map(function([k, ic]) {
               return (
                 <button
                   key={k}
@@ -1578,7 +1708,7 @@ window.Kirkogotchi = function Kirkogotchi() {
             </div>
           ) : (
             <div style={{ display: "flex", justifyContent: "center", marginTop: 4 }}>
-              <ABtn label="NEW KIRK" emoji="🇺🇸" bg="#c41e3a" onClick={reset} />
+              <ABtn label="NEW KIRKIE" emoji="🇺🇸" bg="#c41e3a" onClick={reset} />
             </div>
           )}
 
@@ -1596,6 +1726,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 // ═══ START SCREEN ═══
 function StartScreen({ onCreate }) {
   const [name, setName] = useState("CHARLIE");
+  const [gender, setGender] = useState("boy"); // "boy" or "girl"
   const [f, setF] = useState(0);
   const [dfs, setDfs] = useState(1.0);
   const dirRef = useRef(1);
@@ -1650,17 +1781,39 @@ function StartScreen({ onCreate }) {
             <div style={{ background: "#dce8f5", borderRadius: 7, padding: "18px 10px 10px" }}>
               <svg viewBox="0 0 100 80" style={{ width: 160, display: "block", margin: "0 auto" }}>
                 <g transform="translate(50, 34)">
-                  <Kirk stage="adult" mood="happy" faceSize={dfs} frame={f} scale={0.95} />
+                  <Kirk stage="adult" mood="happy" faceSize={dfs} frame={f} scale={0.95} gender={gender} />
                 </g>
               </svg>
-              <div style={{ fontSize: 10, color: "#1a3a6a88", letterSpacing: 1, marginTop: 2 }}>face: {Math.round(dfs * 100)}%</div>
-              <div style={{ fontSize: 9, color: "#1a3a6a", letterSpacing: 1, marginTop: 6, marginBottom: 4 }}>Name your Kirk</div>
+
+              {/* Gender selector */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 6, marginBottom: 4 }}>
+                {[["boy", "👔 Kirk"], ["girl", "🎀 Erika"]].map(([g, label]) => (
+                  <button
+                    key={g}
+                    onClick={() => { setGender(g); if (g === "girl" && name === "CHARLIE") setName("ERIKA"); if (g === "boy" && name === "ERIKA") setName("CHARLIE"); sfxTap(); }}
+                    style={{
+                      background: gender === g ? "#1a3a6a" : "#1a3a6a22",
+                      border: gender === g ? "2px solid #1a3a6a" : "2px solid #1a3a6a44",
+                      borderRadius: 12,
+                      color: gender === g ? "#fff" : "#1a3a6a",
+                      fontFamily: "'Bangers',cursive",
+                      fontSize: 12,
+                      padding: "3px 12px",
+                      cursor: "pointer",
+                      letterSpacing: 1,
+                      transition: "all 0.15s",
+                    }}
+                  >{label}</button>
+                ))}
+              </div>
+
+              <div style={{ fontSize: 9, color: "#1a3a6a", letterSpacing: 1, marginTop: 4, marginBottom: 4 }}>Name your Kirkie</div>
               <input
                 type="text"
                 maxLength={10}
                 value={name}
                 onChange={e => setName(e.target.value.toUpperCase())}
-                onKeyDown={e => { if (e.key === "Enter" && name.trim()) onCreate(name.trim()); }}
+                onKeyDown={e => { if (e.key === "Enter" && name.trim()) onCreate(name.trim(), gender); }}
                 autoFocus
                 style={{
                   background: "transparent",
@@ -1679,16 +1832,16 @@ function StartScreen({ onCreate }) {
             </div>
           </div>
           <div style={{ marginTop: 12 }}>
-            <ABtn label="HATCH" emoji="🇺🇸" bg="#c41e3a" onClick={() => { if (name.trim()) onCreate(name.trim()); }} off={!name.trim()} />
+            <ABtn label="HATCH" emoji="🇺🇸" bg="#c41e3a" onClick={() => { if (name.trim()) onCreate(name.trim(), gender); }} off={!name.trim()} />
           </div>
           <div style={{ fontSize: 9, color: "#fff3", marginTop: 10, lineHeight: 1.8, fontFamily: "'Press Start 2P',monospace" }}>
-            Keep him fed · Keep him tweeting
+            Keep your Kirkie fed & tweeting
             <br />
-            Keep his face the right size
+            Keep the face the right size
           </div>
           {hatched > 0 && (
             <div style={{ fontSize: 8, color: "#c41e3a55", fontFamily: "'Press Start 2P',monospace", marginTop: 6 }}>
-              Kirks lost: {hatched}
+              Kirkies lost: {hatched}
             </div>
           )}
         </div>
