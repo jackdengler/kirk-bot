@@ -10,6 +10,7 @@
   <meta property="og:title" content="Kirkogotchi">
   <meta property="og:description" content="Raise your own pixel Charlie Kirk. We Are Charlie Kirk.">
   <meta property="og:type" content="website">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -33,7 +34,7 @@
     <script>
       var facts = ["Preparing hamberders...", "Calibrating clout meters...", "We Are Charlie Kirk."];
       var fi = 0;
-      setInterval(function() { fi = (fi + 1) % facts.length; document.getElementById('kirk-fact').textContent = facts[fi]; }, 1500);
+      var _factIv = setInterval(function() { var el = document.getElementById('kirk-fact'); if (!el) { clearInterval(_factIv); return; } fi = (fi + 1) % facts.length; el.textContent = facts[fi]; }, 1500);
     </script>
   </div>
   <div id="root"></div>

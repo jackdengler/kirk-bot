@@ -1294,7 +1294,7 @@ function Onboarding({ onDone }) {
   const [step, setStep] = useState(0);
   const tips = [
     { icon: "🍔", title: "FEED YOUR KIRKIE", desc: "Tap buttons to keep stats up. If two stats hit zero... Valhalla." },
-    { icon: "👆", title: "TAP YOUR KIRKIE", desc: "Tap Kirk to interact! Backgrounds change and Kirk reacts." },
+    { icon: "👆", title: "TAP YOUR KIRKIE", desc: "Tap Kirk to interact! He'll react and say funny things." },
     { icon: "🏆", title: "EARN ACHIEVEMENTS", desc: "Tweet, debate, survive — unlock achievements and climb the ranks." },
   ];
 
@@ -2224,7 +2224,7 @@ window.Kirkogotchi = function Kirkogotchi() {
         maxWidth: 380,
         width: "100%",
         overflow: "hidden",
-        border: "2px solid #c41e3a44",
+        border: "1px solid #ffffff15",
       }}>
         {/* Header bar */}
         <div style={{
@@ -2349,7 +2349,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
                   {/* Tappable Kirk area */}
                   <div onClick={tapKirk} style={{ cursor: "pointer", position: "relative" }}>
-                    <svg viewBox="0 0 100 100" style={{ display: "block", width: "100%", maxHeight: 160, position: "relative" }}>
+                    <svg viewBox="0 0 100 90" style={{ display: "block", width: "100%", minHeight: 140, position: "relative" }}>
                       {evolveFlash && (
                         <rect width="100" height="90" fill="#fff" opacity={0.4}>
                           <animate attributeName="opacity" from="0.5" to="0" dur="0.6s" fill="freeze" />
@@ -2370,7 +2370,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                         </g>
                       )}
 
-                      <g transform="translate(50, 42)">
+                      <g transform="translate(50, 40) scale(1.15)">
                         <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} gender={pet.gender} blink={blinking} energy={pet.energy} hunger={pet.hunger} />
                         {/* Held item */}
                         {holdingItem && (
