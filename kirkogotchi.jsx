@@ -33,6 +33,16 @@ const TWEETS = [
   "The left can't meme.",
   "DESTROYED with FACTS!",
   "Curious. Very curious. 🤔",
+  "Just built different 💪",
+  "Another day, another lib OWNED",
+  "Posting through it 🇺🇸",
+  "I don't take days off",
+  "Wake up. Tweet. Repeat.",
+  "My mentions are a WARZONE",
+  "Not reading the replies 😎",
+  "Quote tweeting for FREEDOM",
+  "Thread incoming... 🧵",
+  "They're not sending their best tweets",
 ];
 
 const DEAR_LIBS = [
@@ -44,6 +54,10 @@ const DEAR_LIBS = [
   { top: "You want free college but", mid: "can't even keep a virtual", bot: "pet alive." },
   { top: "If the economy is fine,", mid: "why is my Kirkogotchi's", bot: "clout at 0%?" },
   { top: "You say walls don't work,", mid: "but my Kirk can't escape", bot: "this screen. Curious." },
+  { top: "You want universal healthcare", mid: "but you can't even keep", bot: "one pixel man ALIVE?" },
+  { top: "If pronouns matter so much,", mid: "why is my Kirkogotchi's", bot: "gender just 'based'?" },
+  { top: "You claim to love science,", mid: "yet you can't explain why", bot: "his face keeps SHRINKING" },
+  { top: "If cancel culture isn't real,", mid: "why did my Kirkogotchi just", bot: "get RATIO'D to death?" },
 ];
 
 // ═══ IDLE DIALOGUE ═══
@@ -55,6 +69,10 @@ const IDLE_DIALOGUE = {
     "Unpaid but PASSIONATE",
     "I read half a Ben Shapiro book once",
     "Do I get a lanyard?",
+    "My mom says I have leadership potential",
+    "Is this internship... paid?",
+    "I brought my own stapler",
+    "Can I put this on LinkedIn?",
   ],
   baby: [
     "Just hit 200 followers. Basically famous",
@@ -63,6 +81,10 @@ const IDLE_DIALOGUE = {
     "Actually, I think you'll find...",
     "Just posted a thread 🧵",
     "Ratio'd someone with 10x my followers",
+    "Check my bio for the link",
+    "Working on a manifesto (blog post)",
+    "My open rate is INSANE",
+    "Might start a newsletter idk",
   ],
   child: [
     "Welcome back to the show, folks",
@@ -71,6 +93,10 @@ const IDLE_DIALOGUE = {
     "This episode sponsored by FREEDOM",
     "Like and subscribe or you're a lib",
     "We're going LIVE in 3... 2...",
+    "Drop a 🇺🇸 in the chat",
+    "Don't forget to leave a 5-star review",
+    "Our Patreon supporters get the REAL takes",
+    "This is the episode the establishment FEARS",
   ],
   teen: [
     "Let's go to the phones",
@@ -79,6 +105,10 @@ const IDLE_DIALOGUE = {
     "I've been saying this for YEARS",
     "Sources? I AM the source",
     "My ratings are through the ROOF",
+    "They tried to cancel me. I got STRONGER",
+    "Just got a call from a VERY important person",
+    "The TRUTH cannot be silenced",
+    "My haters are my biggest fans",
   ],
   adult: [
     "Livestreaming from my private jet",
@@ -87,6 +117,12 @@ const IDLE_DIALOGUE = {
     "Most important election of our lifetime",
     "I built this organization from NOTHING",
     "Call me Mr. Chairman",
+    "We have chapters on every campus in AMERICA",
+    "Just got off the phone with... well, I can't say",
+    "My schedule? 4am wake up. Tweet. Repeat.",
+    "The movement is BIGGER than me now",
+    "Check the merch store",
+    "We're changing HEARTS and MINDS",
   ],
 };
 
@@ -451,6 +487,10 @@ const DEBATE_ARGS = [
   "source?", "cope", "ratio", "free college", "inequality!",
   "empathy!", "science!", "diversity!", "workers rights", "regulate!",
   "fact check!", "nuance!", "context!", "privilege!", "universal basic",
+  "peer reviewed", "systemic!", "intersect!", "solidarity!", "mutual aid",
+  "read theory", "late stage", "living wage", "eat the rich", "praxis!",
+  "rent control", "unions!", "abolish!", "defund!", "redistribute",
+  "ACAB!", "gentrified", "billionaires", "boot licker", "comrade!",
 ];
 
 function DebateGame({ onDone, name, faceSize }) {
@@ -818,6 +858,47 @@ const KIRKIFY_TEMPLATES = [
         </g>
       ))}
       <text x="100" y="120" fontSize="16" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle" letterSpacing="3" stroke="#fff" strokeWidth="1">KIRKIFIED</text>
+    </svg>
+  )},
+  { name: "AMERICAN KIRKOTHIC", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      <rect width="200" height="134" fill="#8a7a5a" />
+      {/* Barn bg */}
+      <path d="M50 30 L100 10 L150 30 L150 100 L50 100 Z" fill="#8B4513" />
+      <rect x="85" y="60" width="30" height="40" fill="#3a2a10" />
+      {/* Two Kirks - American Gothic style */}
+      <g transform="translate(75, 60)">
+        <Kirk stage="adult" mood="neutral" faceSize={fs} frame={0} scale={0.4} />
+      </g>
+      <g transform="translate(125, 60)">
+        <Kirk stage="adult" mood="neutral" faceSize={fs} frame={0} scale={0.4} />
+      </g>
+      {/* Pitchfork */}
+      <line x1="65" y1="45" x2="65" y2="100" stroke="#5a4a2a" strokeWidth="2" />
+      <path d="M60 45 L65 35 L70 45" fill="none" stroke="#5a4a2a" strokeWidth="2" />
+      <line x1="65" y1="35" x2="65" y2="45" stroke="#5a4a2a" strokeWidth="2" />
+      <text x="100" y="125" fontSize="7" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="1" stroke="#000" strokeWidth="0.3">AMERICAN KIRKOTHIC</text>
+    </svg>
+  )},
+  { name: "KIRK LISA", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      <rect width="200" height="134" fill="#1a1a2e" />
+      {/* Starry night swirls */}
+      {[[40, 30], [80, 20], [120, 35], [160, 25]].map(([x, y], i) => (
+        <ellipse key={i} cx={x} cy={y} rx={20} ry={12} fill="none" stroke="#4a6aaa" strokeWidth="3" opacity="0.4" transform={"rotate(" + (i * 20) + " " + x + " " + y + ")"} />
+      ))}
+      {/* Village silhouette */}
+      <rect y="80" width="200" height="54" fill="#1a2a1a" />
+      <rect x="30" y="60" width="15" height="40" fill="#2a1a2a" />
+      <polygon points="37,40 25,60 50,60" fill="#2a1a2a" />
+      <rect x="80" y="55" width="20" height="45" fill="#2a1a2a" />
+      <rect x="140" y="65" width="25" height="35" fill="#2a1a2a" />
+      {/* Kirk moon */}
+      <circle cx="165" cy="25" r="15" fill="#f5deb3" />
+      <g transform="translate(165, 25)">
+        <Kirk stage="adult" mood="happy" faceSize={fs} frame={frame} scale={0.2} />
+      </g>
+      <text x="100" y="125" fontSize="7" fontFamily="'Bangers',cursive" fill="#f5deb3" textAnchor="middle" letterSpacing="1">KIRK-Y NIGHT</text>
     </svg>
   )},
   { name: "KIRK VALHALLA", render: (fs, frame) => (
@@ -1300,10 +1381,15 @@ window.Kirkogotchi = function Kirkogotchi() {
               {rally ? (
                 <DebateGame onDone={endRally} name={pet.name} faceSize={fs} />
               ) : view === "kirkify" ? (
-                <div style={{ borderRadius: 8, overflow: "hidden" }} onClick={() => { setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length); sfxKirkify(); }}>
+                <div style={{ borderRadius: 8, overflow: "hidden", cursor: "pointer" }} onClick={() => { setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length); sfxKirkify(); }}>
                   {KIRKIFY_TEMPLATES[kirkifyIdx].render(fs, frame)}
-                  <div style={{ background: "#0d2240", padding: "4px 0", textAlign: "center" }}>
-                    <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#fff5" }}>TAP FOR MORE · {KIRKIFY_TEMPLATES[kirkifyIdx].name}</span>
+                  <div style={{ background: "#0d2240", padding: "6px 0 4px", textAlign: "center" }}>
+                    <div style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a", marginBottom: 2 }}>
+                      📸 SCREENSHOT & SHARE
+                    </div>
+                    <div style={{ fontSize: 4.5, fontFamily: "'Press Start 2P',monospace", color: "#fff3" }}>
+                      TAP FOR MORE · {kirkifyIdx + 1}/{KIRKIFY_TEMPLATES.length} · {KIRKIFY_TEMPLATES[kirkifyIdx].name}
+                    </div>
                   </div>
                 </div>
               ) : view === "meme" ? (
