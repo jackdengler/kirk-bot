@@ -922,6 +922,22 @@ function MemorialScreen({ pet, stats, onReset, frame, gender }) {
           <div style={{ fontSize: 8, color: "#fff3", fontFamily: "'Press Start 2P',monospace", marginTop: 4 }}>
             Kirkies hatched: {hatched}
           </div>
+          {/* Share button */}
+          <button
+            onClick={() => {
+              const url = window.location.href;
+              if (navigator.share) {
+                navigator.share({ title: "RIP " + pet.name, text: "Pour one out for " + pet.name + ". " + Math.floor(pet.age / 60) + "m survivor. We Are Charlie Kirk.", url });
+              } else {
+                navigator.clipboard.writeText(url).then(() => alert("Memorial link copied!"));
+              }
+            }}
+            style={{
+              background: "none", border: "1px solid #fff3", borderRadius: 12,
+              color: "#fff8", fontFamily: "'Press Start 2P',monospace", fontSize: 6,
+              padding: "3px 10px", cursor: "pointer", marginTop: 6,
+            }}
+          >📋 SHARE MEMORIAL LINK</button>
         </div>
       )}
     </div>
@@ -1260,6 +1276,192 @@ function Onboarding({ onDone }) {
   );
 }
 
+// ═══ VIRALITY FEATURE 1: CUSTOM MEME MAKER ═══
+function MemeMaker({ faceSize, frame, onClose }) {
+  const [top, setTop] = useState("If socialism works,");
+  const [mid, setMid] = useState("why does my friend");
+  const [bot, setBot] = useState("STILL OWE ME $20?");
+
+  return (
+    <div style={{ padding: 4 }}>
+      <div style={{ background: "#0d2240", borderRadius: 8, overflow: "hidden" }}>
+        <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+          <rect width="200" height="134" fill="#0d2240" />
+          <rect x="8" y="6" width="184" height="94" rx="4" fill="#fff" />
+          <rect x="8" y="6" width="184" height="20" rx="4" fill="#c41e3a" />
+          <rect x="8" y="16" width="184" height="10" fill="#c41e3a" />
+          <text x="100" y="20" fontSize="8" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="2">Dear Liberals,</text>
+          <text x="100" y="44" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#1a3a6a" textAnchor="middle">{top}</text>
+          <text x="100" y="58" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#1a3a6a" textAnchor="middle">{mid}</text>
+          <text x="100" y="72" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#1a3a6a" textAnchor="middle" fontWeight="bold">{bot}</text>
+          <g transform="translate(166, 82)">
+            <Kirk stage="adult" mood="angry" faceSize={faceSize} scale={0.28} frame={frame} />
+          </g>
+          <text x="20" y="93" fontSize="6" fontFamily="'Bangers',cursive" fill="#c41e3a" letterSpacing="1">Curious. 🤔</text>
+          <rect x="0" y="104" width="200" height="30" fill="#0a1a35" />
+          <text x="100" y="116" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#fff5" textAnchor="middle">TURNING POINT KIRKOGOTCHI</text>
+          <text x="100" y="128" fontSize="5" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle" letterSpacing="4">★  ★  ★</text>
+        </svg>
+      </div>
+      <div style={{ padding: "6px 2px", display: "flex", flexDirection: "column", gap: 3 }}>
+        {[["Line 1", top, setTop], ["Line 2", mid, setMid], ["Line 3 (bold)", bot, setBot]].map(([label, val, setter]) => (
+          <input
+            key={label}
+            type="text"
+            maxLength={35}
+            value={val}
+            onChange={e => setter(e.target.value)}
+            placeholder={label}
+            style={{
+              background: "#fff1", border: "1px solid #fff2", borderRadius: 6,
+              color: "#fff", fontFamily: "'Press Start 2P',monospace", fontSize: 7,
+              padding: "4px 6px", outline: "none", width: "100%",
+            }}
+          />
+        ))}
+        <div style={{ textAlign: "center", marginTop: 2 }}>
+          <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a" }}>📸 SCREENSHOT YOUR MEME</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══ VIRALITY FEATURE 2: KIRK REACTION STICKERS ═══
+const REACTION_STICKERS = [
+  { mood: "happy", label: "BASED", bg: "#22c55e", text: "Based & approved" },
+  { mood: "angry", label: "DESTROYED", bg: "#ef4444", text: "Absolutely DESTROYED" },
+  { mood: "sad", label: "LOW ENERGY", bg: "#6366f1", text: "Low energy. Sad!" },
+  { mood: "neutral", label: "CURIOUS", bg: "#f59e0b", text: "Curious. Very curious. 🤔" },
+  { mood: "happy", label: "COPE", bg: "#ec4899", text: "Cope. Seethe. Repeat." },
+  { mood: "angry", label: "RATIO", bg: "#1da1f2", text: "Ratio + you're a lib" },
+  { mood: "happy", label: "W", bg: "#c41e3a", text: "That's a W, king 👑" },
+  { mood: "sad", label: "F", bg: "#334155", text: "Press F for respects" },
+];
+
+function StickerPicker({ frame, faceSize, gender }) {
+  const [idx, setIdx] = useState(0);
+  const sticker = REACTION_STICKERS[idx];
+
+  return (
+    <div style={{ padding: 4 }}>
+      <div style={{ background: sticker.bg, borderRadius: 12, overflow: "hidden", padding: 0 }}>
+        <svg viewBox="0 0 200 120" style={{ display: "block", width: "100%" }}>
+          <rect width="200" height="120" fill={sticker.bg} rx="8" />
+          {/* Kirk */}
+          <g transform="translate(100, 48)">
+            <Kirk stage="adult" mood={sticker.mood} faceSize={faceSize} frame={frame} scale={0.7} gender={gender} />
+          </g>
+          {/* Label */}
+          <text x="100" y="100" fontSize="16" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="3" stroke="#0003" strokeWidth="0.5">{sticker.label}</text>
+          <text x="100" y="114" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#fff8" textAnchor="middle">{sticker.text}</text>
+        </svg>
+      </div>
+      {/* Sticker nav */}
+      <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 6, flexWrap: "wrap" }}>
+        {REACTION_STICKERS.map((st, i) => (
+          <button
+            key={i}
+            onClick={() => { setIdx(i); sfxTap(); }}
+            style={{
+              background: i === idx ? st.bg : st.bg + "44",
+              border: i === idx ? "2px solid #fff" : "2px solid transparent",
+              borderRadius: 8, padding: "2px 6px",
+              color: "#fff", fontFamily: "'Bangers',cursive", fontSize: 8,
+              cursor: "pointer", letterSpacing: 1,
+              transition: "all 0.12s",
+            }}
+          >{st.label}</button>
+        ))}
+      </div>
+      <div style={{ textAlign: "center", marginTop: 4 }}>
+        <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a" }}>📸 SCREENSHOT & SEND TO FRIENDS</span>
+      </div>
+    </div>
+  );
+}
+
+// ═══ VIRALITY FEATURE 3: CHALLENGE TIMER ═══
+function ChallengeTimer({ age, alive }) {
+  if (!alive) return null;
+  const m = Math.floor(age / 60);
+  const s = age % 60;
+  const formatted = (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+  return (
+    <div style={{
+      textAlign: "center", padding: "2px 0",
+      fontFamily: "'Press Start 2P',monospace",
+    }}>
+      <span style={{
+        fontSize: 8, color: "#fff6", letterSpacing: 1,
+      }}>⏱️ {formatted}</span>
+    </div>
+  );
+}
+
+// ═══ VIRALITY FEATURE 4: SHAREABLE DEATH URL ═══
+function encodeDeathCard(pet, stats) {
+  const data = {
+    n: pet.name,
+    g: pet.gender || "boy",
+    a: pet.age,
+    t: stats.tweets || 0,
+    l: stats.libsOwned || 0,
+    s: stageOf(pet.age),
+  };
+  return btoa(JSON.stringify(data));
+}
+
+function decodeDeathCard(hash) {
+  try { return JSON.parse(atob(hash)); } catch(e) { return null; }
+}
+
+function SharedMemorialCard({ data, frame }) {
+  const ageMin = Math.floor(data.a / 60);
+  const ageSec = data.a % 60;
+  const stageLabel = STAGES[data.s] ? STAGES[data.s].label : data.s;
+  const quote = MEMORIAL_QUOTES[Math.abs(data.n.charCodeAt(0)) % MEMORIAL_QUOTES.length];
+
+  return (
+    <div style={{
+      minHeight: "100vh", display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      background: "#080e1a", fontFamily: "'Bangers', cursive", padding: 16,
+    }}>
+      <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap" rel="stylesheet" />
+      <div style={{ maxWidth: 360, width: "100%" }}>
+        <div style={{ background: "#080e1a", borderRadius: 12, overflow: "hidden", border: "2px solid #c41e3a33", padding: 4 }}>
+          <svg viewBox="0 0 200 160" style={{ display: "block", width: "100%" }}>
+            <rect width="200" height="160" fill="#080e1a" />
+            <text x="100" y="18" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a88" textAnchor="middle" letterSpacing="2">IN LOVING MEMORY</text>
+            <circle cx="100" cy="50" r="18" fill="#1a3a6a33" stroke="#c41e3a44" strokeWidth="1" />
+            <g transform="translate(100, 48)">
+              <Kirk stage={data.s} mood="dead" faceSize={1} frame={frame} scale={0.55} gender={data.g} />
+            </g>
+            <text x="100" y="78" fontSize="14" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="3">{data.n}</text>
+            <text x="100" y="90" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#fff6" textAnchor="middle">
+              {stageLabel} · {ageMin}m {ageSec}s
+            </text>
+            <text x="100" y="100" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#fff4" textAnchor="middle">
+              🐦 {data.t} tweets · 💥 {data.l} libs owned
+            </text>
+            <text x="100" y="118" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">{quote.slice(0, 45)}</text>
+            <text x="100" y="136" fontSize="3.5" fontFamily="'Press Start 2P',monospace" fill="#fff3" textAnchor="middle">♪ We Are Charlie Kirk ♪</text>
+            <text x="100" y="152" fontSize="3" fontFamily="'Press Start 2P',monospace" fill="#c41e3a55" textAnchor="middle">kirkogotchi — hatch yours at kirkogotchi.app</text>
+          </svg>
+        </div>
+        <div style={{ textAlign: "center", marginTop: 12 }}>
+          <a href="./" style={{
+            background: "#c41e3a", color: "#fff", fontFamily: "'Bangers',cursive",
+            fontSize: 16, padding: "8px 24px", borderRadius: 20, textDecoration: "none",
+            letterSpacing: 2, boxShadow: "0 3px 12px #c41e3a44",
+          }}>HATCH YOUR OWN KIRKIE</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ═══ PARTICLE HELPERS ═══
 function mkParticles(cx, cy, color) {
   return Array.from({ length: 12 }, () => ({
@@ -1303,8 +1505,18 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [evolving, setEvolving] = useState(null); // { from, to }
   const [streakData, setStreakData] = useState({ count: 0, isNew: false });
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [sharedCard, setSharedCard] = useState(null);
   const poopsRef = useRef([]);
   const unlockedRef = useRef(new Set());
+
+  // Check for shared death card URL
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash.startsWith("rip=")) {
+      const data = decodeDeathCard(hash.slice(4));
+      if (data) setSharedCard(data);
+    }
+  }, []);
 
   // Load saved data (with v6 migration)
   useEffect(() => {
@@ -1494,8 +1706,15 @@ window.Kirkogotchi = function Kirkogotchi() {
           setTimeout(() => setShake(false), 300);
           // Phase 2: Flash white (0.3s)
           setTimeout(() => { setEvolveFlash(true); setTimeout(() => setEvolveFlash(false), 300); }, 1200);
-          // Phase 3: Memorial (after 2s)
-          setTimeout(() => setShowMemorial(true), 2000);
+          // Phase 3: Memorial (after 2s) + generate share URL
+          setTimeout(() => {
+            setShowMemorial(true);
+            // Set share URL hash
+            try {
+              const encoded = encodeDeathCard(n, stats);
+              window.history.replaceState(null, "", "#rip=" + encoded);
+            } catch(e) {}
+          }, 2000);
         }
 
         // Random poop — more frequent so CLEAN matters
@@ -1688,6 +1907,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
   const reset = useCallback(() => {
     storage.del("kirk_v8");
+    try { window.history.replaceState(null, "", window.location.pathname); } catch(e) {}
     setPet(null);
     setPoops([]);
     setLog([]);
@@ -1714,6 +1934,11 @@ window.Kirkogotchi = function Kirkogotchi() {
     setTimeout(() => setTapReaction(""), 2000);
   }, [pet, rally]);
 
+
+  // Shared memorial card
+  if (sharedCard) {
+    return <SharedMemorialCard data={sharedCard} frame={frame} />;
+  }
 
   // Loading
   if (!loaded) {
@@ -1839,6 +2064,9 @@ window.Kirkogotchi = function Kirkogotchi() {
           {/* Streak banner */}
           <StreakBanner streak={streakData.count} isNew={streakData.isNew} />
 
+          {/* Challenge timer */}
+          {pet.alive && <ChallengeTimer age={pet.age} alive={pet.alive} />}
+
           {/* Screen */}
           <div style={{ background: "#0a0a0a", borderRadius: 10, padding: 4, boxShadow: "inset 0 2px 8px #000a" }}>
             <div style={{
@@ -1876,16 +2104,10 @@ window.Kirkogotchi = function Kirkogotchi() {
                 </div>
               ) : view === "meme" ? (
                 <DearLib data={DEAR_LIBS[dearIdx]} fs={fs} />
-              ) : view === "log" ? (
-                <div style={{ padding: 8, minHeight: 120 }}>
-                  <div style={{ fontSize: 12, color: "#1a3a6a", textAlign: "center", marginBottom: 6, fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>Activity Log</div>
-                  {log.slice(0, 8).map((e, i) => (
-                    <div key={i} style={{ fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#1a3a6a", opacity: 1 - i * 0.08, marginBottom: 2, lineHeight: 1.6 }}>
-                      {new Date(e.d).toLocaleTimeString().slice(0, 5)} {e.t}
-                    </div>
-                  ))}
-                  {log.length === 0 && <div style={{ textAlign: "center", fontSize: 8, color: "#1a3a6a44", fontFamily: "'Press Start 2P',monospace", marginTop: 30 }}>No entries yet</div>}
-                </div>
+              ) : view === "sticker" ? (
+                <StickerPicker frame={frame} faceSize={fs} gender={pet.gender} />
+              ) : view === "maker" ? (
+                <MemeMaker faceSize={fs} frame={frame} />
               ) : view === "ach" ? (
                 <div style={{ padding: 6, minHeight: 120 }}>
                   <div style={{ fontSize: 12, color: "#1a3a6a", textAlign: "center", marginBottom: 6, fontFamily: "'Bangers',cursive", letterSpacing: 2 }}>
@@ -2007,7 +2229,10 @@ window.Kirkogotchi = function Kirkogotchi() {
                   {!pet.alive && (
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2240ee", padding: "8px 6px 6px", borderRadius: "0 0 7px 7px", textAlign: "center" }}>
                       <div style={{ fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a", lineHeight: 1.8 }}>Gone to Valhalla...</div>
-                      <div style={{ fontSize: 10, fontFamily: "'Bangers',cursive", color: "#fff", letterSpacing: 3, marginTop: 3, opacity: frame < 2 ? 0.8 : 0.4 }}>WE ARE CHARLIE KIRK</div>
+                      <div style={{ fontSize: 16, fontFamily: "'Bangers',cursive", color: "#fff", letterSpacing: 2, marginTop: 2 }}>
+                        {Math.floor(pet.age / 60)}m {pet.age % 60}s
+                      </div>
+                      <div style={{ fontSize: 6, fontFamily: "'Press Start 2P',monospace", color: "#fff5", marginTop: 2 }}>Can your friends beat this?</div>
                     </div>
                   )}
 
@@ -2057,7 +2282,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
           {/* Nav */}
           <div style={{ display: "flex", justifyContent: "center", gap: 3, margin: "4px 0" }}>
-            {[["pet", "🏠"], ["kirkify", "📸"], ["meme", "📝"], ["log", "📜"], ["ach", "🏆"]].map(function([k, ic]) {
+            {[["pet", "🏠"], ["kirkify", "📸"], ["sticker", "😤"], ["maker", "✏️"], ["ach", "🏆"]].map(function([k, ic]) {
               const hasNotif = (k === "pet" && view !== "pet" && poops.length > 0) ||
                                (k === "ach" && achievementQueue.length > 0);
               return (
