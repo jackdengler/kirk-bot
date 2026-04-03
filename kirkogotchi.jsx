@@ -46,6 +46,91 @@ const DEAR_LIBS = [
   { top: "You say walls don't work,", mid: "but my Kirk can't escape", bot: "this screen. Curious." },
 ];
 
+// ═══ IDLE DIALOGUE ═══
+const IDLE_DIALOGUE = {
+  egg: [
+    "Is this where the free pizza is?",
+    "I'm just here for the resume line",
+    "Who do I email about parking",
+    "Unpaid but PASSIONATE",
+    "I read half a Ben Shapiro book once",
+    "Do I get a lanyard?",
+  ],
+  baby: [
+    "Just hit 200 followers. Basically famous",
+    "My Substack is gonna blow up",
+    "Hot take incoming...",
+    "Actually, I think you'll find...",
+    "Just posted a thread 🧵",
+    "Ratio'd someone with 10x my followers",
+  ],
+  child: [
+    "Welcome back to the show, folks",
+    "Smash that subscribe button",
+    "My guest today is... me",
+    "This episode sponsored by FREEDOM",
+    "Like and subscribe or you're a lib",
+    "We're going LIVE in 3... 2...",
+  ],
+  teen: [
+    "Let's go to the phones",
+    "BREAKING: I have an opinion",
+    "Mainstream media won't cover this",
+    "I've been saying this for YEARS",
+    "Sources? I AM the source",
+    "My ratings are through the ROOF",
+  ],
+  adult: [
+    "Livestreaming from my private jet",
+    "Debate me. Anywhere. Anytime.",
+    "Facts don't care about your feelings",
+    "Most important election of our lifetime",
+    "I built this organization from NOTHING",
+    "Call me Mr. Chairman",
+  ],
+};
+
+const NEGLECT_LINES = {
+  hunger: [
+    "You call this FREEDOM? I'm STARVING",
+    "Even communists eat sometimes",
+    "I'd eat a lib right now. That hungry.",
+  ],
+  happiness: [
+    "Even Ben Shapiro texts me back faster",
+    "This is what the left wants",
+    "I'm not mad. I'm DISAPPOINTED.",
+  ],
+  energy: [
+    "Haven't slept since the Obama administration",
+    "Running on pure ideology at this point",
+    "Low energy! Sad!",
+  ],
+  clout: [
+    "I'm being CENSORED",
+    "Big Tech is suppressing my reach",
+    "Shadow banned AGAIN",
+  ],
+  multi: [
+    "This is literally 1984",
+    "You're worse than socialism",
+    "I didn't die for THIS... wait",
+  ],
+};
+
+const MEMORIAL_QUOTES = [
+  "He tweeted so we didn't have to.",
+  '"His face was the perfect size." — God',
+  '"Rest now, brother. We have the watch." — Kash Patel',
+  "He owned every lib. Every. Single. One.",
+  "Valhalla just got a LOT more based.",
+  "The ratio... is finally 1:1.",
+  "Gone but never unsubscribed.",
+  "He died doing what he loved: having an opinion.",
+  "Pour one out. (Diet Coke, obviously.)",
+  "His face may have been small, but his impact was huge.",
+];
+
 // ═══ AUDIO ═══
 let _ctx = null;
 function getCtx() {
@@ -83,6 +168,60 @@ function sfxHatch() { [0, 80, 160, 240].forEach((t, i) => setTimeout(() => tone(
 function sfxTap() { tone(800, 0.02, 0.03); }
 function sfxCatch() { tone(1200, 0.03, 0.04); }
 function sfxLight() { tone(180, 0.12, 0.04, "triangle"); }
+function sfxDebateHit() { tone(600, 0.04, 0.05); setTimeout(() => tone(900, 0.03, 0.04), 50); }
+
+// "We Are Charlie Kirk" chiptune — simplified 8-bit melody
+let _memorial = null;
+function playWeAreCharlieKirk() {
+  const c = getCtx();
+  if (!c) return;
+  try { if (c.state === "suspended") c.resume(); } catch(e) { return; }
+  if (_memorial) { try { _memorial.stop(); } catch(e) {} }
+
+  // Simple solemn melody in C major — chiptune style
+  const notes = [
+    [261, 0.4], [329, 0.4], [392, 0.8], // C E G
+    [349, 0.4], [329, 0.4], [293, 0.8], // F E D
+    [261, 0.4], [293, 0.4], [329, 0.4], [261, 0.8], // C D E C
+    [293, 0.4], [329, 0.4], [349, 0.4], [392, 0.8], // D E F G
+    [329, 0.4], [293, 0.4], [261, 1.2], // E D C (resolve)
+  ];
+
+  let t = c.currentTime + 0.3;
+  const gain = c.createGain();
+  gain.gain.value = 0.04;
+  gain.connect(c.destination);
+
+  notes.forEach(([freq, dur]) => {
+    const osc = c.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    const noteGain = c.createGain();
+    noteGain.gain.setValueAtTime(0.06, t);
+    noteGain.gain.exponentialRampToValueAtTime(0.001, t + dur - 0.05);
+    osc.connect(noteGain).connect(c.destination);
+    osc.start(t);
+    osc.stop(t + dur);
+    t += dur;
+  });
+
+  // Loop it
+  const totalDur = notes.reduce((a, [, d]) => a + d, 0);
+  _memorial = { stop: () => {} };
+  const loopId = setTimeout(() => playWeAreCharlieKirk(), (totalDur + 0.5) * 1000);
+  _memorial = { stop: () => clearTimeout(loopId) };
+}
+
+function stopMemorialMusic() {
+  if (_memorial) { try { _memorial.stop(); } catch(e) {} _memorial = null; }
+}
+
+// ═══ STORAGE (localStorage) ═══
+const storage = {
+  get(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e) { return null; } },
+  set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} },
+  del(key) { try { localStorage.removeItem(key); } catch(e) {} },
+};
 
 // ═══ KIRK FACE ═══
 function Kirk({ stage, mood, faceSize, frame, dark, scale }) {
@@ -275,13 +414,21 @@ function DearLib({ data, fs }) {
   );
 }
 
-// ═══ MINI GAME ═══
-function Rally({ onDone, name }) {
-  const [items, setItems] = useState([]);
-  const [cx, setCx] = useState(100);
+// ═══ MINI GAME: DEBATE ME COWARD ═══
+const DEBATE_ARGS = [
+  "healthcare?", "climate!", "pronouns!", "tax the rich", "actually...",
+  "source?", "cope", "ratio", "free college", "inequality!",
+  "empathy!", "science!", "diversity!", "workers rights", "regulate!",
+  "fact check!", "nuance!", "context!", "privilege!", "universal basic",
+];
+
+function DebateGame({ onDone, name, faceSize }) {
+  const [bubbles, setBubbles] = useState([]);
   const [sc, setSc] = useState(0);
-  const [t, setT] = useState(10);
+  const [misses, setMisses] = useState(0);
+  const [t, setT] = useState(15);
   const [fx, setFx] = useState([]);
+  const [shakeKirk, setShakeKirk] = useState(false);
   const fc = useRef(0);
   const done = useRef(false);
 
@@ -295,72 +442,371 @@ function Rally({ onDone, name }) {
   useEffect(() => {
     if (t === 0 && !done.current) {
       done.current = true;
-      setTimeout(() => onDone(sc), 800);
+      setTimeout(() => onDone(sc, misses), 800);
     }
-  }, [t, sc, onDone]);
+  }, [t, sc, misses, onDone]);
 
   useEffect(() => {
     const iv = setInterval(() => {
       fc.current++;
-      if (fc.current % 4 === 0) {
-        const emojis = ["📖", "🎓", "☕", "🌍", "✊", "🥑", "📰"];
-        setItems(p => [...p, { id: Math.random(), x: 10 + Math.random() * 180, y: -6, e: emojis[Math.floor(Math.random() * emojis.length)] }]);
+      // Spawn bubbles — speed ramps up
+      const spawnRate = t > 10 ? 6 : t > 5 ? 4 : 3;
+      if (fc.current % spawnRate === 0) {
+        const arg = DEBATE_ARGS[Math.floor(Math.random() * DEBATE_ARGS.length)];
+        setBubbles(p => [...p, {
+          id: Math.random(),
+          x: 195,
+          y: 25 + Math.random() * 80,
+          text: arg,
+          speed: 1.5 + Math.random() * 1.5 + (15 - t) * 0.1,
+        }]);
       }
-      setItems(p => p.map(i => ({ ...i, y: i.y + 2.6 })).filter(i => i.y < 148));
-      setFx(p => p.map(f => ({ ...f, l: f.l - 1 })).filter(f => f.l > 0));
-    }, 38);
-    return () => clearInterval(iv);
-  }, []);
-
-  useEffect(() => {
-    setItems(prev => {
-      let hit = false;
-      const rest = prev.filter(i => {
-        if (i.y > 88 && i.y < 118 && Math.abs(i.x - cx) < 22) {
-          hit = true;
-          setFx(f => [...f, { x: i.x, y: i.y, l: 12 }]);
-          return false;
-        }
-        return true;
+      // Move bubbles
+      setBubbles(p => {
+        const next = [];
+        p.forEach(b => {
+          const nb = { ...b, x: b.x - b.speed };
+          if (nb.x < 25) {
+            // Hit Kirk!
+            setMisses(m => m + 1);
+            setShakeKirk(true);
+            setTimeout(() => setShakeKirk(false), 100);
+          } else {
+            next.push(nb);
+          }
+        });
+        return next;
       });
-      if (hit) { setSc(p => p + 1); sfxCatch(); }
-      return rest;
-    });
-  }, [items, cx]);
+      // Decay FX
+      setFx(p => p.map(f => ({ ...f, l: f.l - 1 })).filter(f => f.l > 0));
+    }, 45);
+    return () => clearInterval(iv);
+  }, [t]);
 
-  function handlePointer(e) {
-    const r = e.currentTarget.getBoundingClientRect();
-    setCx(Math.max(12, Math.min(188, ((e.clientX - r.left) / r.width) * 200)));
+  function popBubble(id, x, y) {
+    setBubbles(p => p.filter(b => b.id !== id));
+    setSc(p => p + 1);
+    setFx(f => [...f, { x, y, l: 14 }]);
+    sfxDebateHit();
   }
 
+  const rating = sc > 12 ? "ABSOLUTELY DESTROYED" : sc > 7 ? "BASED" : sc > 3 ? "MID ENERGY" : "LOW ENERGY";
+
   return (
-    <div style={{ background: "#0d2240", borderRadius: 8, overflow: "hidden", touchAction: "none", cursor: "crosshair" }}
-      onPointerMove={handlePointer} onPointerDown={handlePointer}>
+    <div style={{ background: "#0d2240", borderRadius: 8, overflow: "hidden", touchAction: "none" }}>
       <svg viewBox="0 0 200 130" style={{ display: "block", width: "100%" }}>
         <rect width="200" height="130" fill="#dce8f5" />
+        {/* Header */}
         <rect width="200" height="20" fill="#1a3a6a" />
-        <text x="12" y="14" fontSize="7" fontFamily="'Bangers',cursive" fill="#fff" letterSpacing="1">OWN THE LIBS!</text>
+        <text x="12" y="14" fontSize="7" fontFamily="'Bangers',cursive" fill="#fff" letterSpacing="1">DEBATE ME, COWARD!</text>
         <text x="188" y="14" fontSize="8" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="end">{sc}</text>
-        <rect x="0" y="20" width={200 * t / 10} height="2.5" fill="#c41e3a" />
-        {items.map(i => <text key={i.id} x={i.x} y={i.y} fontSize="12" textAnchor="middle">{i.e}</text>)}
-        {fx.map((p, i) => (
-          <text key={i} x={p.x} y={p.y - (12 - p.l) * 2.5} fontSize="7" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle" opacity={p.l / 12} fontWeight="bold">OWNED!</text>
-        ))}
-        <g transform={"translate(" + cx + ", 102)"}>
-          <Kirk stage="adult" mood="angry" faceSize={0.85} scale={0.38} frame={fc.current % 4} />
+        {/* Timer bar */}
+        <rect x="0" y="20" width={200 * t / 15} height="2.5" fill="#c41e3a" />
+
+        {/* Kirk at podium */}
+        <g transform={shakeKirk ? "translate(22, 72) rotate(3)" : "translate(22, 72)"}>
+          <rect x={-8} y={10} width={16} height={20} rx={2} fill="#5a3a1a" />
+          <rect x={-10} y={10} width={20} height={3} rx={1} fill="#7a5a3a" />
+          <Kirk stage="adult" mood="angry" faceSize={faceSize} scale={0.32} frame={fc.current % 4} />
         </g>
+
+        {/* Bubbles */}
+        {bubbles.map(b => (
+          <g key={b.id} onClick={() => popBubble(b.id, b.x, b.y)} style={{ cursor: "pointer" }}>
+            <rect x={b.x - 22} y={b.y - 8} width={44} height={16} rx={8} fill="#fff" stroke="#1a3a6a" strokeWidth={0.8} />
+            <text x={b.x} y={b.y + 3} fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#1a3a6a" textAnchor="middle">{b.text}</text>
+          </g>
+        ))}
+
+        {/* DESTROYED fx */}
+        {fx.map((p, i) => (
+          <text key={i} x={p.x} y={p.y - (14 - p.l) * 2} fontSize="6" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle" opacity={p.l / 14} fontWeight="bold">DESTROYED!</text>
+        ))}
+
+        {/* End screen */}
         {t === 0 && (
           <g>
-            <rect x="15" y="30" width="170" height="58" rx="8" fill="#1a3a6aee" />
-            <text x="100" y="52" fontSize="14" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="2">{sc > 6 ? "DESTROYED!" : sc > 3 ? "OWNED!" : "LOW ENERGY!"}</text>
-            <text x="100" y="68" fontSize="7" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle">{sc} libs owned</text>
-            <text x="100" y="82" fontSize="6" fontFamily="'Bangers',cursive" fill="#fff8" textAnchor="middle">Curious.</text>
+            <rect x="15" y="30" width="170" height="65" rx="8" fill="#1a3a6aee" />
+            <text x="100" y="52" fontSize="12" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="2">{rating}</text>
+            <text x="100" y="68" fontSize="7" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle">{sc} arguments destroyed</text>
+            <text x="100" y="80" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#fff6" textAnchor="middle">{misses > 0 ? misses + " got through" : "FLAWLESS DEBATE"}</text>
+            <text x="100" y="90" fontSize="5" fontFamily="'Bangers',cursive" fill="#fff4" textAnchor="middle">Curious.</text>
           </g>
         )}
       </svg>
     </div>
   );
 }
+
+// ═══ MEMORIAL SCREEN ═══
+function MemorialScreen({ pet, stats, onReset, frame }) {
+  const [showBtn, setShowBtn] = useState(false);
+  const [musicStarted, setMusicStarted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowBtn(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!musicStarted) {
+      playWeAreCharlieKirk();
+      setMusicStarted(true);
+    }
+    return () => stopMemorialMusic();
+  }, [musicStarted]);
+
+  const quote = MEMORIAL_QUOTES[Math.floor(Math.abs(Math.sin(pet.born || 0)) * MEMORIAL_QUOTES.length)];
+  const hatched = storage.get("kirks_hatched") || 0;
+  const highestStage = STAGES[stageOf(pet.age)] || STAGES.egg;
+  const ageMin = Math.floor(pet.age / 60);
+  const ageSec = pet.age % 60;
+
+  // Candle positions
+  const candles = [30, 55, 80, 105, 130, 155, 170];
+
+  return (
+    <div style={{ background: "#080e1a", borderRadius: 8, overflow: "hidden", position: "relative" }}>
+      <svg viewBox="0 0 200 180" style={{ display: "block", width: "100%" }}>
+        {/* Dark solemn background */}
+        <rect width="200" height="180" fill="#080e1a" />
+
+        {/* Stars */}
+        {Array.from({ length: 15 }, (_, i) => (
+          <circle key={i} cx={(i * 31 + 7) % 200} cy={(i * 17 + 3) % 60} r={0.6} fill="#fff" opacity={0.15 + (frame % 2) * 0.1} />
+        ))}
+
+        {/* Flag at half mast */}
+        <line x1="18" y1="8" x2="18" y2="65" stroke="#888" strokeWidth="1" />
+        <g transform="translate(19, 28)">
+          <rect width="18" height="10" fill="#c41e3a" rx="1" />
+          <rect y="2.5" width="18" height="2.5" fill="#fff" />
+          <rect y="7.5" width="18" height="2.5" fill="#fff" />
+          <rect width="7" height="5" fill="#1a3a6a" />
+        </g>
+
+        {/* In Loving Memory */}
+        <text x="100" y="22" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a88" textAnchor="middle" letterSpacing="2">IN LOVING MEMORY</text>
+
+        {/* Kirk portrait */}
+        <circle cx="100" cy="52" r="18" fill="#1a3a6a33" stroke="#c41e3a44" strokeWidth="1" />
+        <g transform="translate(100, 50)">
+          <Kirk stage={stageOf(pet.age)} mood="dead" faceSize={1} frame={frame} scale={0.55} />
+        </g>
+
+        {/* Name */}
+        <text x="100" y="80" fontSize="12" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="3">{pet.name}</text>
+
+        {/* Life details */}
+        <text x="100" y="92" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#fff6" textAnchor="middle">
+          {highestStage.label} · {ageMin}m {ageSec}s
+        </text>
+        <text x="100" y="102" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#fff4" textAnchor="middle">
+          Tweets: {stats.tweets || 0} · Libs owned: {stats.libsOwned || 0}
+        </text>
+
+        {/* Quote */}
+        <text x="100" y="120" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">{quote.length > 40 ? quote.slice(0, 40) : quote}</text>
+        {quote.length > 40 && (
+          <text x="100" y="128" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">{quote.slice(40)}</text>
+        )}
+
+        {/* We Are Charlie Kirk */}
+        <text x="100" y="142" fontSize="3.5" fontFamily="'Press Start 2P',monospace" fill="#fff3" textAnchor="middle">
+          ♪ We Are Charlie Kirk ♪
+        </text>
+
+        {/* Candlelight vigil */}
+        {candles.map((cx, i) => (
+          <g key={i} transform={"translate(" + cx + ", 155)"}>
+            {/* Person silhouette */}
+            <circle cy={-3} r={2.5} fill="#1a3a6a55" />
+            <rect x={-1.5} y={0} width={3} height={6} rx={1} fill="#1a3a6a44" />
+            {/* Candle */}
+            <rect x={-0.5} y={-8} width={1} height={4} fill="#f5deb3" />
+            {/* Flame */}
+            <ellipse cy={-10} rx={1} ry={1.5} fill="#f59e0b" opacity={frame % 2 === 0 ? 0.9 : 0.6}>
+              <animate attributeName="ry" values="1.5;2;1.5" dur="0.8s" repeatCount="indefinite" />
+            </ellipse>
+            <ellipse cy={-10} rx={0.5} ry={0.8} fill="#fff" opacity={0.4} />
+          </g>
+        ))}
+
+        {/* Valhalla */}
+        <text x="100" y="175" fontSize="6" fontFamily="'Bangers',cursive" fill="#c8a828" textAnchor="middle" letterSpacing="4" opacity={frame % 4 < 2 ? 0.7 : 0.35}>
+          SEE YOU IN VALHALLA
+        </text>
+      </svg>
+
+      {/* Hatch another button */}
+      {showBtn && (
+        <div style={{ position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)", textAlign: "center" }}>
+          <button
+            onClick={() => { stopMemorialMusic(); onReset(); }}
+            style={{
+              background: "#c41e3a",
+              border: "2px solid #8b1525",
+              borderRadius: 20,
+              color: "#fff",
+              fontFamily: "'Bangers',cursive",
+              fontSize: 14,
+              padding: "6px 20px",
+              cursor: "pointer",
+              letterSpacing: 2,
+              boxShadow: "0 2px 8px #0008",
+            }}
+          >
+            🇺🇸 HATCH ANOTHER
+          </button>
+          <div style={{ fontSize: 8, color: "#fff3", fontFamily: "'Press Start 2P',monospace", marginTop: 4 }}>
+            Kirks hatched: {hatched}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══ KIRKIFY TEMPLATES ═══
+const KIRKIFY_TEMPLATES = [
+  { name: "MONA KIRK", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      <rect width="200" height="134" fill="#3a2a10" />
+      <rect x="6" y="6" width="188" height="122" fill="#8a7a50" rx="2" />
+      <rect x="10" y="10" width="180" height="114" fill="#c4a44a22" />
+      {/* Simple Mona Lisa body silhouette */}
+      <path d="M70 50 Q100 30 130 50 L140 134 L60 134 Z" fill="#2a1a08" />
+      <g transform="translate(100, 42)">
+        <Kirk stage="adult" mood="happy" faceSize={fs} frame={frame} scale={0.6} />
+      </g>
+      <text x="100" y="128" fontSize="6" fontFamily="'Bangers',cursive" fill="#fff8" textAnchor="middle" letterSpacing="2">MONA KIRK</text>
+    </svg>
+  )},
+  { name: "MOUNT KIRKMORE", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      <rect width="200" height="134" fill="#87CEEB" />
+      {/* Mountain */}
+      <path d="M0 80 L30 50 L60 70 L90 40 L120 55 L160 35 L200 60 L200 134 L0 134 Z" fill="#8a8a7a" />
+      {/* 4 Kirk faces */}
+      {[35, 75, 115, 155].map((x, i) => (
+        <g key={i} transform={"translate(" + x + ", 58)"}>
+          <Kirk stage="adult" mood="neutral" faceSize={fs} frame={frame} scale={0.28} />
+        </g>
+      ))}
+      <text x="100" y="128" fontSize="7" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="2" stroke="#000" strokeWidth="0.5">MOUNT KIRKMORE</text>
+    </svg>
+  )},
+  { name: "THIS IS FINE", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      <rect width="200" height="134" fill="#f5a623" />
+      {/* Flames */}
+      {[20, 50, 80, 120, 150, 180].map((x, i) => (
+        <g key={i}>
+          <ellipse cx={x} cy={40 + (i % 3) * 10} rx={15} ry={25} fill="#e8441188" />
+          <ellipse cx={x} cy={30 + (i % 3) * 10} rx={8} ry={15} fill="#ff880066" />
+        </g>
+      ))}
+      {/* Kirk at table */}
+      <rect x="60" y="80" width="80" height="3" fill="#5a3a1a" />
+      <rect x="65" y="83" width="3" height="20" fill="#5a3a1a" />
+      <rect x="132" y="83" width="3" height="20" fill="#5a3a1a" />
+      <rect x="85" y="70" width="12" height="12" rx="1" fill="#8B4513" /> {/* Coffee cup */}
+      <rect x="87" y="66" width="8" height="5" rx="2" fill="#d4a574" />
+      <g transform="translate(100, 68)">
+        <Kirk stage="adult" mood="happy" faceSize={fs} frame={frame} scale={0.4} />
+      </g>
+      <text x="100" y="126" fontSize="8" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="1" stroke="#000" strokeWidth="0.5">THIS IS FINE.</text>
+    </svg>
+  )},
+  { name: "KIRKBUCKS", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      <rect width="200" height="134" fill="#2a5a2a" rx="6" />
+      <rect x="4" y="4" width="192" height="126" rx="4" fill="#f5f0e0" stroke="#2a5a2a" strokeWidth="2" />
+      <text x="100" y="20" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#2a5a2a" textAnchor="middle">THE UNITED STATES OF KIRK</text>
+      <ellipse cx="100" cy="65" rx="30" ry="32" fill="#f0e8d0" stroke="#2a5a2a" strokeWidth="1.5" />
+      <g transform="translate(100, 60)">
+        <Kirk stage="adult" mood="neutral" faceSize={fs} frame={frame} scale={0.5} />
+      </g>
+      <text x="20" y="65" fontSize="28" fontFamily="'Bangers',cursive" fill="#2a5a2a">$</text>
+      <text x="180" y="65" fontSize="28" fontFamily="'Bangers',cursive" fill="#2a5a2a" textAnchor="end">$</text>
+      <text x="100" y="115" fontSize="10" fontFamily="'Bangers',cursive" fill="#2a5a2a" textAnchor="middle" letterSpacing="3">ONE KIRK DOLLAR</text>
+      <text x="100" y="126" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#2a5a2a88" textAnchor="middle">IN KIRK WE TRUST</text>
+    </svg>
+  )},
+  { name: "GIGAKIRK", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      <rect width="200" height="134" fill="#1a1a2e" />
+      {/* Dramatic lighting */}
+      <radialGradient id="glow"><stop offset="0%" stopColor="#c41e3a33" /><stop offset="100%" stopColor="#0000" /></radialGradient>
+      <ellipse cx="100" cy="60" rx="90" ry="60" fill="url(#glow)" />
+      {/* Big Kirk */}
+      <g transform="translate(100, 55)">
+        <Kirk stage="adult" mood="angry" faceSize={fs} frame={frame} scale={1.2} />
+      </g>
+      <text x="100" y="124" fontSize="14" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle" letterSpacing="4">GIGAKIRK</text>
+    </svg>
+  )},
+  { name: "LIBERTY KIRK", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      <rect width="200" height="134" fill="#87CEEB" />
+      {/* Water */}
+      <rect y="100" width="200" height="34" fill="#2a6a9a" />
+      {/* Pedestal */}
+      <rect x="75" y="85" width="50" height="49" fill="#6a8a6a" />
+      <rect x="70" y="82" width="60" height="5" rx="1" fill="#7a9a7a" />
+      {/* Robe */}
+      <path d="M85 40 L75 85 L125 85 L115 40 Z" fill="#6a9a6a" />
+      {/* Torch arm */}
+      <line x1="115" y1="40" x2="130" y2="15" stroke="#6a9a6a" strokeWidth="4" />
+      <ellipse cx="130" cy="10" rx="4" ry="6" fill="#f5a623" />
+      {/* Kirk face */}
+      <g transform="translate(100, 32)">
+        <Kirk stage="adult" mood="happy" faceSize={fs} frame={frame} scale={0.4} />
+      </g>
+      {/* Crown */}
+      <g transform="translate(100, 10)">
+        {[-6, -3, 0, 3, 6].map((x, i) => (
+          <line key={i} x1={x} y1={0} x2={x * 1.5} y2={-6} stroke="#6a9a6a" strokeWidth="1.5" />
+        ))}
+      </g>
+      <text x="100" y="128" fontSize="6" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="1" stroke="#0008" strokeWidth="0.3">GIVE ME LIBERTY OR GIVE ME KIRK</text>
+    </svg>
+  )},
+  { name: "KIRKIFIED", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      <rect width="200" height="134" fill="#ff69b4" />
+      <rect x="5" y="5" width="190" height="124" fill="#1a1a2e" rx="4" />
+      {/* Multiple Kirk faces scattered */}
+      {[[40, 35], [100, 45], [160, 30], [60, 80], [140, 75], [100, 100]].map(([x, y], i) => (
+        <g key={i} transform={"translate(" + x + "," + y + ") rotate(" + ((i * 23 - 30) % 60) + ")"}>
+          <Kirk stage={["egg", "baby", "child", "teen", "adult"][i % 5]} mood="happy" faceSize={fs} frame={(frame + i) % 4} scale={0.22 + (i % 3) * 0.08} />
+        </g>
+      ))}
+      <text x="100" y="120" fontSize="16" fontFamily="'Bangers',cursive" fill="#c41e3a" textAnchor="middle" letterSpacing="3" stroke="#fff" strokeWidth="1">KIRKIFIED</text>
+    </svg>
+  )},
+  { name: "KIRK VALHALLA", render: (fs, frame) => (
+    <svg viewBox="0 0 200 134" style={{ display: "block", width: "100%" }}>
+      {/* Golden sky */}
+      <rect width="200" height="134" fill="#1a0a2a" />
+      <radialGradient id="heaven"><stop offset="0%" stopColor="#c8a82866" /><stop offset="100%" stopColor="#0000" /></radialGradient>
+      <ellipse cx="100" cy="40" rx="100" ry="50" fill="url(#heaven)" />
+      {/* Light rays */}
+      {[70, 85, 100, 115, 130].map((x, i) => (
+        <line key={i} x1={x} y1="0" x2={x + (i - 2) * 8} y2="134" stroke="#c8a82811" strokeWidth="8" />
+      ))}
+      {/* Kirk ascending */}
+      <g transform={"translate(100, " + (45 + Math.sin(frame) * 2) + ")"}>
+        <Kirk stage="adult" mood="happy" faceSize={fs} frame={frame} scale={0.6} />
+      </g>
+      {/* Wings */}
+      <path d="M70 52 Q50 35 30 45 Q45 38 65 48" fill="#fff3" />
+      <path d="M130 52 Q150 35 170 45 Q155 38 135 48" fill="#fff3" />
+      <text x="100" y="100" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#c8a828" textAnchor="middle">WELCOME TO VALHALLA</text>
+      <text x="100" y="118" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#c8a82866" textAnchor="middle">★ WE ARE CHARLIE KIRK ★</text>
+    </svg>
+  )},
+];
 
 // ═══ PARTICLE HELPERS ═══
 function mkParticles(cx, cy, color) {
@@ -390,34 +836,30 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [particles, setParticles] = useState([]);
   const [evolveFlash, setEvolveFlash] = useState(false);
   const [dearIdx, setDearIdx] = useState(0);
-  const [faceSlider, setFaceSlider] = useState(null);
+  const [faceSlider, setFaceSlider] = useState(1.0);
   const [kFlash, setKFlash] = useState(false);
   const [shake, setShake] = useState(false);
+  const [kirkifyIdx, setKirkifyIdx] = useState(0);
+  const [idleMsg, setIdleMsg] = useState("");
+  const [stats, setStats] = useState({ tweets: 0, libsOwned: 0 });
+  const [showMemorial, setShowMemorial] = useState(false);
 
   // Load saved data
   useEffect(() => {
-    (async () => {
-      try {
-        const r = await window.storage.get("kirk_v6");
-        if (r && r.value) {
-          const d = JSON.parse(r.value);
-          setPet(d.p || null);
-          setPoops(d.pp || []);
-          setLog(d.lg || []);
-        }
-      } catch (e) { /* no save */ }
-      setLoaded(true);
-    })();
+    const d = storage.get("kirk_v7");
+    if (d) {
+      setPet(d.p || null);
+      setPoops(d.pp || []);
+      setLog(d.lg || []);
+      setFaceSlider(d.fs != null ? d.fs : 1.0);
+      setStats(d.st || { tweets: 0, libsOwned: 0 });
+      if (d.p && !d.p.alive) setShowMemorial(true);
+    }
+    setLoaded(true);
   }, []);
 
-  const save = useCallback(async (p, pp, lg) => {
-    try {
-      await window.storage.set("kirk_v6", JSON.stringify({
-        p: p,
-        pp: pp || [],
-        lg: lg || [],
-      }));
-    } catch (e) { /* silent */ }
+  const save = useCallback((p, pp, lg, fs, st) => {
+    storage.set("kirk_v7", { p, pp: pp || [], lg: lg || [], fs: fs != null ? fs : 1.0, st: st || { tweets: 0, libsOwned: 0 } });
   }, []);
 
   const addLog = useCallback((text) => {
@@ -443,6 +885,40 @@ window.Kirkogotchi = function Kirkogotchi() {
     return () => clearInterval(iv);
   }, []);
 
+  // Idle dialogue
+  useEffect(() => {
+    if (!pet || !pet.alive || rally || lightsOff) return;
+    const iv = setInterval(() => {
+      if (Math.random() > 0.4) return; // Don't always talk
+      const stage = stageOf(pet.age);
+
+      // Check for neglect lines
+      const lowCount = [pet.hunger < 20, pet.happiness < 20, pet.energy < 15, pet.clout < 20].filter(Boolean).length;
+      if (lowCount >= 2 && Math.random() < 0.5) {
+        const lines = NEGLECT_LINES.multi;
+        setIdleMsg(lines[Math.floor(Math.random() * lines.length)]);
+      } else if (pet.hunger < 20 && Math.random() < 0.4) {
+        const lines = NEGLECT_LINES.hunger;
+        setIdleMsg(lines[Math.floor(Math.random() * lines.length)]);
+      } else if (pet.happiness < 20 && Math.random() < 0.4) {
+        const lines = NEGLECT_LINES.happiness;
+        setIdleMsg(lines[Math.floor(Math.random() * lines.length)]);
+      } else if (pet.energy < 15 && Math.random() < 0.4) {
+        const lines = NEGLECT_LINES.energy;
+        setIdleMsg(lines[Math.floor(Math.random() * lines.length)]);
+      } else if (pet.clout < 20 && Math.random() < 0.4) {
+        const lines = NEGLECT_LINES.clout;
+        setIdleMsg(lines[Math.floor(Math.random() * lines.length)]);
+      } else {
+        const lines = IDLE_DIALOGUE[stage] || IDLE_DIALOGUE.egg;
+        setIdleMsg(lines[Math.floor(Math.random() * lines.length)]);
+      }
+
+      setTimeout(() => setIdleMsg(""), 3000);
+    }, 6000);
+    return () => clearInterval(iv);
+  }, [pet, rally, lightsOff]);
+
   // Game tick
   useEffect(() => {
     if (!pet || !pet.alive || rally) return;
@@ -463,6 +939,10 @@ window.Kirkogotchi = function Kirkogotchi() {
           n.alive = false;
           sfxDie();
           addLog("💀 Gone to Valhalla...");
+          // Increment hatched counter
+          const hatched = storage.get("kirks_hatched") || 0;
+          storage.set("kirks_hatched", hatched + 1);
+          setTimeout(() => setShowMemorial(true), 1500);
         }
 
         // Random poop
@@ -494,9 +974,9 @@ window.Kirkogotchi = function Kirkogotchi() {
   // Auto-save
   useEffect(() => {
     if (!pet) return;
-    const iv = setInterval(() => save(pet, poops, log), 3000);
+    const iv = setInterval(() => save(pet, poops, log, faceSlider, stats), 3000);
     return () => clearInterval(iv);
-  }, [pet, poops, log, save]);
+  }, [pet, poops, log, faceSlider, stats, save]);
 
   // Actions
   const doAction = useCallback((type) => {
@@ -538,10 +1018,12 @@ window.Kirkogotchi = function Kirkogotchi() {
       sfxKirkify();
       setKFlash(true);
       setTimeout(() => setKFlash(false), 300);
+      setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length);
+      setView("kirkify");
       setPet(p => ({
         ...p,
-        happiness: Math.min(100, p.happiness + 7),
-        clout: Math.min(100, p.clout + 5),
+        happiness: Math.min(100, p.happiness + 3),
+        clout: Math.min(100, p.clout + 3),
       }));
       addLog("👤 KIRKIFIED!");
       setMsg("👤 KIRKIFIED!");
@@ -573,6 +1055,7 @@ window.Kirkogotchi = function Kirkogotchi() {
         setMsg(tw);
         addLog("📱 " + tw);
         setParticles(p => [...p, ...mkParticles(50, 38, "#1da1f2")]);
+        setStats(s => ({ ...s, tweets: (s.tweets || 0) + 1 }));
       }
       if (type === "clean") {
         n.clout = 100;
@@ -590,6 +1073,7 @@ window.Kirkogotchi = function Kirkogotchi() {
         setView("meme");
         addLog("💥 Owned the libs");
         setParticles(p => [...p, ...mkParticles(50, 40, "#dc2626")]);
+        setStats(s => ({ ...s, libsOwned: (s.libsOwned || 0) + 1 }));
       }
       return n;
     });
@@ -597,7 +1081,7 @@ window.Kirkogotchi = function Kirkogotchi() {
     setTimeout(() => { setAct(null); setMsg(""); }, 1500);
   }, [pet, act, rally, lightsOff, addLog]);
 
-  const endRally = useCallback((sc) => {
+  const endRally = useCallback((sc, misses) => {
     setRally(false);
     setPet(p => ({
       ...p,
@@ -605,25 +1089,30 @@ window.Kirkogotchi = function Kirkogotchi() {
       energy: Math.max(0, p.energy - 8),
       clout: Math.min(100, p.clout + sc * 2),
     }));
-    addLog("🎤 Rally: " + sc + " owned");
-    setMsg(sc > 6 ? "🔥 DESTROYED!" : sc > 3 ? "💪 Based!" : "😐 Low energy...");
+    setStats(s => ({ ...s, libsOwned: (s.libsOwned || 0) + sc }));
+    addLog("🎤 Debate: " + sc + " destroyed");
+    setMsg(sc > 12 ? "🔥 ABSOLUTELY DESTROYED!" : sc > 7 ? "💪 Based!" : "😐 Low energy...");
     setTimeout(() => setMsg(""), 1200);
   }, [addLog]);
 
   const createPet = useCallback((name) => {
     var p = { name: name, hunger: 80, happiness: 80, energy: 100, clout: 70, age: 0, alive: true, born: Date.now() };
     var lg = [{ t: "🇺🇸 " + name + " joined TPUSA!", d: Date.now() }];
+    var st = { tweets: 0, libsOwned: 0 };
     setPet(p);
     setPoops([]);
     setLog(lg);
-    save(p, [], lg);
+    setStats(st);
+    setFaceSlider(1.0);
+    setShowMemorial(false);
+    save(p, [], lg, 1.0, st);
     setMsg(name + " has arrived!");
     sfxHatch();
     setTimeout(() => setMsg(""), 1800);
   }, [save]);
 
-  const reset = useCallback(async () => {
-    try { await window.storage.delete("kirk_v6"); } catch (e) {}
+  const reset = useCallback(() => {
+    storage.del("kirk_v7");
     setPet(null);
     setPoops([]);
     setLog([]);
@@ -631,8 +1120,16 @@ window.Kirkogotchi = function Kirkogotchi() {
     setLightsOff(false);
     setRally(false);
     setView("pet");
-    setFaceSlider(null);
+    setFaceSlider(1.0);
+    setShowMemorial(false);
+    setStats({ tweets: 0, libsOwned: 0 });
   }, []);
+
+  // Face slider comment
+  var faceComment = "";
+  if (faceSlider < 0.4) faceComment = "My face is NORMAL SIZED";
+  else if (faceSlider > 1.3) faceComment = "ENHANCE";
+  else if (Math.round(faceSlider * 100) === 69) faceComment = "Nice.";
 
   // Loading
   if (!loaded) {
@@ -644,13 +1141,34 @@ window.Kirkogotchi = function Kirkogotchi() {
     return <StartScreen onCreate={createPet} />;
   }
 
+  // Memorial screen
+  if (showMemorial && !pet.alive) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#080e1a",
+        fontFamily: "'Bangers', cursive",
+        padding: 8,
+      }}>
+        <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap" rel="stylesheet" />
+        <div style={{ maxWidth: 360, width: "100%" }}>
+          <MemorialScreen pet={pet} stats={stats} onReset={reset} frame={frame} />
+        </div>
+      </div>
+    );
+  }
+
   // Derived state
   var stage = pet.alive ? stageOf(pet.age) : "baby";
   var ov = Math.round((pet.hunger + pet.happiness + pet.energy + pet.clout) / 4);
   var mood = !pet.alive ? "dead" : lightsOff ? "sleep" : ov > 70 ? "happy" : ov < 25 ? "sad" : "neutral";
-  var autoFS = 0.4 + (ov / 100) * 0.8;
-  var fs = faceSlider !== null ? faceSlider : autoFS;
+  var fs = faceSlider;
   var dark = lightsOff;
+  var displayMsg = msg || idleMsg;
 
   return (
     <div style={{
@@ -718,7 +1236,14 @@ window.Kirkogotchi = function Kirkogotchi() {
               transform: shake ? "translate(1px,-1px)" : "none",
             }}>
               {rally ? (
-                <Rally onDone={endRally} name={pet.name} />
+                <DebateGame onDone={endRally} name={pet.name} faceSize={fs} />
+              ) : view === "kirkify" ? (
+                <div style={{ borderRadius: 8, overflow: "hidden" }} onClick={() => { setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length); sfxKirkify(); }}>
+                  {KIRKIFY_TEMPLATES[kirkifyIdx].render(fs, frame)}
+                  <div style={{ background: "#0d2240", padding: "4px 0", textAlign: "center" }}>
+                    <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#fff5" }}>TAP FOR MORE · {KIRKIFY_TEMPLATES[kirkifyIdx].name}</span>
+                  </div>
+                </div>
               ) : view === "meme" ? (
                 <DearLib data={DEAR_LIBS[dearIdx]} fs={fs} />
               ) : view === "log" ? (
@@ -763,15 +1288,13 @@ window.Kirkogotchi = function Kirkogotchi() {
 
                   {!pet.alive && (
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2240ee", padding: "8px 6px 6px", borderRadius: "0 0 7px 7px", textAlign: "center" }}>
-                      <div style={{ fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a", lineHeight: 1.8 }}>"Rest now, brother.</div>
-                      <div style={{ fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a", lineHeight: 1.8 }}>We have the watch."</div>
-                      <div style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#fff6", marginTop: 2 }}>— Kash Patel</div>
-                      <div style={{ fontSize: 10, fontFamily: "'Bangers',cursive", color: "#fff", letterSpacing: 3, marginTop: 3, opacity: frame < 2 ? 0.8 : 0.4 }}>SEE YOU IN VALHALLA</div>
+                      <div style={{ fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#c41e3a", lineHeight: 1.8 }}>Gone to Valhalla...</div>
+                      <div style={{ fontSize: 10, fontFamily: "'Bangers',cursive", color: "#fff", letterSpacing: 3, marginTop: 3, opacity: frame < 2 ? 0.8 : 0.4 }}>WE ARE CHARLIE KIRK</div>
                     </div>
                   )}
 
-                  {msg && pet.alive && (
-                    <div style={{ position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)", background: "#1a3a6aee", color: "#fff", padding: "4px 12px", borderRadius: 6, fontSize: 7, fontFamily: "'Press Start 2P',monospace", whiteSpace: "nowrap", maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis", boxShadow: "0 2px 10px #0005" }}>{msg}</div>
+                  {displayMsg && pet.alive && (
+                    <div style={{ position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)", background: "#1a3a6aee", color: "#fff", padding: "4px 12px", borderRadius: 6, fontSize: 7, fontFamily: "'Press Start 2P',monospace", whiteSpace: "nowrap", maxWidth: "90%", overflow: "hidden", textOverflow: "ellipsis", boxShadow: "0 2px 10px #0005" }}>{displayMsg}</div>
                   )}
                 </div>
               )}
@@ -786,9 +1309,8 @@ window.Kirkogotchi = function Kirkogotchi() {
                 type="range"
                 min="20"
                 max="150"
-                value={Math.round(fs * 100)}
+                value={Math.round(faceSlider * 100)}
                 onChange={e => setFaceSlider(Number(e.target.value) / 100)}
-                onDoubleClick={() => setFaceSlider(null)}
                 style={{ flex: 1, accentColor: "#c41e3a", height: 16, cursor: "grab", display: "block" }}
               />
               <span style={{ fontSize: 14 }}>😱</span>
@@ -796,7 +1318,9 @@ window.Kirkogotchi = function Kirkogotchi() {
           )}
           {pet.alive && (
             <div style={{ textAlign: "center" }}>
-              <span style={{ fontSize: 8, color: "#fff5", fontFamily: "'Bangers',cursive", letterSpacing: 1 }}>FACE SIZE: {Math.round(fs * 100)}%</span>
+              <span style={{ fontSize: 8, color: "#fff5", fontFamily: "'Bangers',cursive", letterSpacing: 1 }}>
+                FACE SIZE: {Math.round(faceSlider * 100)}%{faceComment ? " — " + faceComment : ""}
+              </span>
             </div>
           )}
 
@@ -812,7 +1336,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
           {/* Nav */}
           <div style={{ display: "flex", justifyContent: "center", gap: 3, margin: "4px 0" }}>
-            {[["pet", "🏠"], ["meme", "📝"], ["log", "📜"]].map(function([k, ic]) {
+            {[["pet", "🏠"], ["kirkify", "👤"], ["meme", "📝"], ["log", "📜"]].map(function([k, ic]) {
               return (
                 <button
                   key={k}
@@ -844,7 +1368,7 @@ window.Kirkogotchi = function Kirkogotchi() {
               <>
                 <ABtn label="FEED" emoji="🍔" bg="#c41e3a" onClick={() => doAction("feed")} off={!!act || rally} />
                 <ABtn label="TWEET" emoji="📱" bg="#1da1f2" onClick={() => doAction("tweet")} off={!!act || rally} />
-                <ABtn label="RALLY" emoji="🎤" bg="#7c3aed" onClick={() => doAction("rally")} off={!!act || rally} />
+                <ABtn label="DEBATE" emoji="🎤" bg="#7c3aed" onClick={() => doAction("rally")} off={!!act || rally} />
                 <ABtn label="OWN" emoji="💥" bg="#dc2626" onClick={() => doAction("own")} off={!!act || rally} />
                 <ABtn label="KIRKIFY" emoji="👤" bg="#f59e0b" onClick={() => doAction("kirkify")} off={!!act || rally} />
                 <ABtn label={lightsOff ? "☀️" : "🌙"} emoji="" bg="#334155" onClick={() => doAction("light")} off={!!act || rally} sm />
@@ -886,6 +1410,8 @@ function StartScreen({ onCreate }) {
     }, 300);
     return () => clearInterval(iv);
   }, []);
+
+  const hatched = storage.get("kirks_hatched") || 0;
 
   return (
     <div style={{
@@ -956,6 +1482,11 @@ function StartScreen({ onCreate }) {
             <br />
             Keep his face the right size
           </div>
+          {hatched > 0 && (
+            <div style={{ fontSize: 8, color: "#c41e3a55", fontFamily: "'Press Start 2P',monospace", marginTop: 6 }}>
+              Kirks lost: {hatched}
+            </div>
+          )}
         </div>
       </div>
     </div>
