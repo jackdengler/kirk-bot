@@ -170,7 +170,30 @@ const TAP_REACTIONS = [
   "Based tap.",
   "That's harassment. (I liked it.)",
   "You call that a tap? LOW ENERGY.",
+  "I'm calling my lawyer.",
+  "That's going in the next book.",
+  "*clears throat* ANYWAY—",
+  "You tap like a Democrat.",
+  "My interns will hear about this.",
+  "Adding you to my blocked list.",
+  "I've been poked by SENATORS.",
+  "This is a HOSTILE work environment.",
+  "Bold. I respect it. Don't do it again.",
+  "I bet you think this is funny. (It is.)",
+  "That's ONE tap. I count everything.",
+  "Tell your friends you touched greatness.",
+  "*starts recording* Say that again.",
+  "I didn't flinch. You flinched.",
+  "My face didn't move. It never moves.",
 ];
+
+const TAP_REACTIONS_BY_STAGE = {
+  egg: ["I'm just an INTERN!", "I don't have HR yet!", "Is tapping in my contract?", "I'll tell my college advisor!"],
+  baby: ["I'm LIVE right now!", "That's going in the blog!", "My 200 followers saw that!", "Screenshot captured."],
+  child: ["We're rolling! CUT!", "That's content, baby!", "My Patreon subs just saw that!", "Playing that on the podcast."],
+  teen: ["My AUDIENCE is watching!", "That's a ratings boost!", "Going straight to the highlight reel!", "The mainstream media WISHES."],
+  adult: ["I have SECURITY for this.", "My lawyer is speed-dialing.", "That's a front page story.", "The board will hear about this."],
+};
 
 
 const MEMORIAL_QUOTES = [
@@ -700,13 +723,19 @@ function SniperGame({ onDone }) {
   const [fx, setFx] = useState([]);
   const [shotFlash, setShotFlash] = useState(false);
   const [muzzleFlash, setMuzzleFlash] = useState(null);
+  const [spotShake, setSpotShake] = useState(false);
+  const [streak, setStreak] = useState(0);
   const fc = useRef(0);
   const done = useRef(false);
 
-  // Countdown
+  // Countdown with beep for last 5 seconds
   useEffect(() => {
     const iv = setInterval(() => {
-      setT(p => { if (p <= 1) { clearInterval(iv); return 0; } return p - 1; });
+      setT(p => {
+        if (p <= 1) { clearInterval(iv); return 0; }
+        if (p <= 6) tone(880 + (6 - p) * 100, 0.04, 0.03, "triangle");
+        return p - 1;
+      });
     }, 1000);
     return () => clearInterval(iv);
   }, []);
@@ -770,16 +799,26 @@ function SniperGame({ onDone }) {
   // Tap a sniper
   function spotSniper(id, x, y) {
     setSnipers(p => p.filter(s => s.id !== id));
-    setScore(s => s + 1);
-    setFx(f => [...f, { x, y, l: 16, text: "SPOTTED!" }]);
+    setStreak(s => s + 1);
+    const streakBonus = streak >= 3 ? " x" + (streak + 1) + "!" : "";
+    const pointsEarned = 1 + Math.floor(streak / 3);
+    setScore(s => s + pointsEarned);
+    setFx(f => [...f, { x, y, l: 18, text: pointsEarned > 1 ? "+" + pointsEarned + "!" : "SPOTTED!" }]);
     sfxDebateHit();
+    // Quick screen shake for juice
+    setSpotShake(true);
+    setTimeout(() => setSpotShake(false), 80);
+    // Reset streak after 2s of no spots
+    clearTimeout(spotSniper._streakTimer);
+    spotSniper._streakTimer = setTimeout(() => setStreak(0), 2000);
   }
+  spotSniper._streakTimer = null;
 
-  const rating = score > 10 ? "SECRET SERVICE MATERIAL" : score > 6 ? "EAGLE EYE" : score > 3 ? "ALERT" : "SITTING DUCK";
+  const rating = score > 15 ? "SECRET SERVICE DIRECTOR" : score > 10 ? "SECRET SERVICE MATERIAL" : score > 6 ? "EAGLE EYE" : score > 3 ? "ALERT" : "SITTING DUCK";
 
   return (
     <div style={{ background: "#1a2a3a", overflow: "hidden", touchAction: "none", cursor: "crosshair" }}>
-      <svg viewBox="0 0 200 140" style={{ display: "block", width: "100%", transition: "transform 0.05s", transform: shotFlash ? "translateX(2px)" : "none" }}>
+      <svg viewBox="0 0 200 140" style={{ display: "block", width: "100%", transition: "transform 0.05s", transform: shotFlash ? "translateX(2px)" : spotShake ? "translateX(-1px) translateY(1px)" : "none" }}>
         {/* Sky gradient */}
         <defs>
           <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
@@ -832,7 +871,7 @@ function SniperGame({ onDone }) {
         {snipers.map(s => {
           const danger = s.phase / s.timer; // 0 to 1
           const glintSize = 1 + danger * 2;
-          const visible = s.phase > 5; // brief delay before visible
+          const visible = s.phase > 3; // brief delay before visible
           return visible ? (
             <g key={s.id} onPointerDown={(e) => { e.preventDefault(); spotSniper(s.id, s.x, s.y); }} style={{ cursor: "crosshair" }}>
               {/* Hitbox — bigger than visual for easier tapping */}
@@ -889,8 +928,14 @@ function SniperGame({ onDone }) {
         <text x="6" y="11" fontSize="5" fontFamily="'Bangers',cursive" fill="#fff" letterSpacing="1">🎯 SPOT THE SNIPER</text>
         <text x="100" y="11" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">UVU CAMPUS</text>
         <text x="194" y="11" fontSize="6" fontFamily="'Bangers',cursive" fill="#22c55e" textAnchor="end">{score}</text>
+        {/* Streak indicator */}
+        {streak >= 2 && (
+          <text x="194" y="136" fontSize="4" fontFamily="'Bangers',cursive" fill="#f59e0b" textAnchor="end">🔥 x{streak}</text>
+        )}
         {/* Timer bar */}
-        <rect x="0" y="16" width={200 * t / 20} height="2" fill={t < 5 ? "#ef4444" : "#22c55e"} />
+        <rect x="0" y="16" width={200 * t / 20} height="2" fill={t < 5 ? "#ef4444" : "#22c55e"}>
+          {t < 5 && <animate attributeName="opacity" values="1;0.5;1" dur="0.5s" repeatCount="indefinite" />}
+        </rect>
         {/* Hit indicator */}
         {hits > 0 && (
           <text x="194" y="136" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#ef4444" textAnchor="end">💀 x{hits}</text>
@@ -903,7 +948,8 @@ function SniperGame({ onDone }) {
             <text x="100" y="48" fontSize="10" fontFamily="'Bangers',cursive" fill="#fff" textAnchor="middle" letterSpacing="2">{rating}</text>
             <text x="100" y="64" fontSize="6" fontFamily="'Bangers',cursive" fill="#22c55e" textAnchor="middle">🎯 {score} snipers spotted</text>
             <text x="100" y="76" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#ef4444" textAnchor="middle">{hits > 0 ? "💀 Hit " + hits + " time" + (hits > 1 ? "s" : "") : "🛡️ UNTOUCHED"}</text>
-            <text x="100" y="92" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#fff4" textAnchor="middle">Protect the podium. Always.</text>
+            <text x="100" y="88" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#f59e0b" textAnchor="middle">{streak >= 3 ? "STREAK BONUS ACTIVE" : ""}</text>
+            <text x="100" y="96" fontSize="4" fontFamily="'Press Start 2P',monospace" fill="#fff4" textAnchor="middle">Protect the podium. Always.</text>
             <text x="100" y="100" fontSize="3.5" fontFamily="'Press Start 2P',monospace" fill="#fff3" textAnchor="middle">UVU · September 10, 2025</text>
           </g>
         )}
@@ -1686,15 +1732,20 @@ function ChallengeBanner({ targetAge }) {
 
 // ═══ PARTICLE HELPERS ═══
 function mkParticles(cx, cy, color) {
-  return Array.from({ length: 12 }, () => ({
-    x: cx + (Math.random() - 0.5) * 8,
-    y: cy,
-    dx: (Math.random() - 0.5) * 3,
-    dy: -Math.random() * 2.5 - 0.5,
-    c: color,
-    l: 16 + Math.random() * 10,
-    ml: 26,
-  }));
+  return Array.from({ length: 16 }, () => {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 2.5;
+    return {
+      x: cx + (Math.random() - 0.5) * 6,
+      y: cy,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed - 1.5,
+      c: color,
+      l: 18 + Math.random() * 12,
+      ml: 30,
+      r: 0.6 + Math.random() * 1.0, // varied sizes
+    };
+  });
 }
 
 // ═══ MAIN APP ═══
@@ -1873,7 +1924,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   useEffect(() => {
     if (!pet || !pet.alive || rally || lightsOff || showOnboarding) return;
     const iv = setInterval(() => {
-      if (Math.random() > 0.4) return; // Don't always talk
+      if (Math.random() > 0.55) return; // Talk fairly often — Kirk loves to talk
       const stage = stageOf(pet.age);
 
       // Check for neglect lines
@@ -1899,7 +1950,7 @@ window.Kirkogotchi = function Kirkogotchi() {
       }
 
       setTimeout(() => setIdleMsg(""), 4000);
-    }, 12000);
+    }, 9000);
     return () => clearInterval(iv);
   }, [pet, rally, lightsOff]);
 
@@ -2057,8 +2108,8 @@ window.Kirkogotchi = function Kirkogotchi() {
     }
 
     // feed, tweet, clean, own
-    if (type === "feed") sfxFeed();
-    if (type === "tweet") sfxTweet();
+    if (type === "feed") { sfxFeed(); setEvolveFlash(true); setTimeout(() => setEvolveFlash(false), 100); }
+    if (type === "tweet") { sfxTweet(); setEvolveFlash(true); setTimeout(() => setEvolveFlash(false), 80); }
     if (type === "clean") sfxClean();
     if (type === "own") sfxOwn();
 
@@ -2068,9 +2119,15 @@ window.Kirkogotchi = function Kirkogotchi() {
         if (n.hunger >= 95) { setMsg("Already full!"); setAct(null); return prev; }
         n.hunger = Math.min(100, n.hunger + 22);
         n.energy = Math.min(100, n.energy + 4);
-        setMsg("🍔 Hamberder time!");
+        var feedMsgs = n.hunger < 30
+          ? ["🍔 FINALLY! I was DYING!", "🍔 FREEDOM NEVER TASTED SO GOOD", "🍔 You SAVED me!"]
+          : n.hunger > 80
+          ? ["🍔 *chef's kiss*", "🍔 One more for the road!", "🍔 Fuel for GREATNESS"]
+          : ["🍔 Hamberder time!", "🍔 Based & fed!", "🍔 The Kirk Diet: WINNING", "🍔 Mmm. Liberty flavor.", "🍔 Patriot fuel!"];
+        setMsg(feedMsgs[Math.floor(Math.random() * feedMsgs.length)]);
         addLog("🍔 Hamberder");
-        setParticles(p => [...p, ...mkParticles(50, 40, "#c41e3a")]);
+        // Extra juicy particle burst
+        setParticles(p => [...p, ...mkParticles(50, 40, "#c41e3a"), ...mkParticles(50, 42, "#f59e0b")]);
         setStats(s => ({ ...s, feeds: (s.feeds || 0) + 1 }));
         float("🍔");
         setHoldingItem("🍔"); setTimeout(() => setHoldingItem(null), 1200);
@@ -2081,7 +2138,8 @@ window.Kirkogotchi = function Kirkogotchi() {
         var tw = TWEETS[Math.floor(Math.random() * TWEETS.length)];
         setMsg(tw);
         addLog("📱 " + tw);
-        setParticles(p => [...p, ...mkParticles(50, 38, "#1da1f2")]);
+        // Blue bird particle burst
+        setParticles(p => [...p, ...mkParticles(50, 38, "#1da1f2"), ...mkParticles(48, 36, "#60a5fa")]);
         setStats(s => ({ ...s, tweets: (s.tweets || 0) + 1 }));
         float("📱");
         setHoldingItem("📱"); setTimeout(() => setHoldingItem(null), 1200);
@@ -2190,7 +2248,10 @@ window.Kirkogotchi = function Kirkogotchi() {
     if (!pet || !pet.alive || rally) return;
     sfxTap();
     doShake();
-    const lines = TAP_REACTIONS;
+    const stage = stageOf(pet.age);
+    // 30% chance of stage-specific reaction for extra personality
+    const useStageLines = Math.random() < 0.3 && TAP_REACTIONS_BY_STAGE[stage];
+    const lines = useStageLines ? TAP_REACTIONS_BY_STAGE[stage] : TAP_REACTIONS;
     setTapReaction(lines[Math.floor(Math.random() * lines.length)]);
     setPet(p => ({ ...p, happiness: Math.min(100, p.happiness + 1) }));
     setTimeout(() => setTapReaction(""), 2500);
@@ -2275,6 +2336,8 @@ window.Kirkogotchi = function Kirkogotchi() {
         @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-30px) scale(0.8)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
         @keyframes evolveIn{from{opacity:0;transform:scale(0.3) rotate(-10deg)}to{opacity:1;transform:scale(1) rotate(0)}}
         @keyframes popIn{from{transform:scale(0)}50%{transform:scale(1.15)}to{transform:scale(1)}}
+        @keyframes barBounce{0%{transform:scaleX(0.95) scaleY(1.1)}50%{transform:scaleX(1.05) scaleY(0.95)}100%{transform:scaleX(1) scaleY(1)}}
+        @keyframes comboIn{from{opacity:0;transform:translateY(4px) scale(0.7)}to{opacity:1;transform:translateY(0) scale(1)}}
         .shell{animation:glow 2.8s ease-in-out infinite}
         .shell-critical{animation:critical 0.8s ease-in-out infinite !important}
       `}</style>
@@ -2466,8 +2529,8 @@ window.Kirkogotchi = function Kirkogotchi() {
                           <text x="85" y="14" fontSize="10" fontFamily="'Bangers',cursive" fill={dark ? "#5a6a8a" : "#1a3a6a"} opacity={frame >= 2 ? 0.3 : 0.4}>Z</text>
                         </g>
                       )}
-                      {poops.map(p => <text key={p.id} x={p.x} y={p.y} fontSize="7">💩</text>)}
-                      {particles.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={1.2} fill={p.c} opacity={p.l / p.ml} />)}
+                      {poops.map((p, i) => <text key={p.id} x={p.x} y={p.y} fontSize="7" style={{ transform: "rotate(" + (Math.sin(frame * 2 + i) * 8) + "deg)", transformOrigin: p.x + "px " + p.y + "px" }}>💩</text>)}
+                      {particles.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={p.r || 1.2} fill={p.c} opacity={p.l / p.ml} />)}
                     </svg>
                   </div>
 
@@ -2520,6 +2583,23 @@ window.Kirkogotchi = function Kirkogotchi() {
               )}
             </div>
 
+          {/* Combo indicator */}
+          {combo > 1 && pet.alive && (
+            <div style={{
+              textAlign: "center", padding: "2px 0 0",
+              animation: "comboIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            }}>
+              <span style={{
+                fontSize: 7, fontFamily: "'Bangers',cursive",
+                color: combo >= 5 ? "#f59e0b" : "#fff8",
+                letterSpacing: 2,
+                textShadow: combo >= 5 ? "0 0 8px #f59e0b44" : "none",
+              }}>
+                {combo >= 5 ? "🔥 " : ""}COMBO x{combo}{combo >= 5 ? " 🔥" : ""}
+              </span>
+            </div>
+          )}
+
           {/* Stat bars — compact single strip */}
           {pet.alive && (
             <div style={{ display: "flex", gap: 2, padding: "3px 6px" }}>
@@ -2534,9 +2614,10 @@ window.Kirkogotchi = function Kirkogotchi() {
                   <div style={{ flex: 1, height: 7, background: "#fff1", borderRadius: 4, overflow: "hidden" }}>
                     <div style={{
                       height: "100%", width: Math.max(0, val) + "%",
-                      background: val < 20 ? "#ef4444" : color,
+                      background: val < 20 ? "linear-gradient(90deg, #ef4444, #dc2626)" : "linear-gradient(90deg, " + color + "cc, " + color + ")",
                       borderRadius: 3,
-                      transition: "width 0.5s ease",
+                      transition: "width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                      boxShadow: val < 20 ? "0 0 6px #ef444444" : "none",
                     }} />
                   </div>
                 </div>
@@ -2630,10 +2711,23 @@ window.Kirkogotchi = function Kirkogotchi() {
 }
 
 // ═══ START SCREEN ═══
+const START_TAGLINES = [
+  "Can you keep him alive?",
+  "The virtual pet America deserves.",
+  "Feed him. Tweet for him. Protect him.",
+  "He's small. He's angry. He's YOURS.",
+  "Warning: may cause tweeting.",
+  "100% more face than expected.",
+  "A tiny patriot needs YOU.",
+  "Based. Pixelated. Hungry.",
+];
+
 function StartScreen({ onCreate }) {
   const [name, setName] = useState("CHARLIE");
   const [f, setF] = useState(0);
   const [dfs, setDfs] = useState(1.0);
+  const [tagline, setTagline] = useState(START_TAGLINES[Math.floor(Math.random() * START_TAGLINES.length)]);
+  const [tagFade, setTagFade] = useState(true);
   const dirRef = useRef(1);
 
   useEffect(() => {
@@ -2651,6 +2745,18 @@ function StartScreen({ onCreate }) {
     return () => clearInterval(iv);
   }, []);
 
+  // Rotate taglines
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setTagFade(false);
+      setTimeout(() => {
+        setTagline(START_TAGLINES[Math.floor(Math.random() * START_TAGLINES.length)]);
+        setTagFade(true);
+      }, 300);
+    }, 4000);
+    return () => clearInterval(iv);
+  }, []);
+
   const hatched = storage.get("kirks_hatched") || 0;
 
   return (
@@ -2665,7 +2771,27 @@ function StartScreen({ onCreate }) {
       padding: 16,
     }}>
       <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap" rel="stylesheet" />
-      <style>{`@keyframes glow{0%,100%{box-shadow:0 8px 32px #0008,0 0 0 2px #8b1525,0 0 16px #c41e3a18}50%{box-shadow:0 8px 32px #0008,0 0 0 2px #8b1525,0 0 28px #c41e3a33}}.shell{animation:glow 2.8s ease-in-out infinite}`}</style>
+      <style>{`
+        @keyframes glow{0%,100%{box-shadow:0 8px 32px #0008,0 0 0 2px #8b1525,0 0 16px #c41e3a18}50%{box-shadow:0 8px 32px #0008,0 0 0 2px #8b1525,0 0 28px #c41e3a33}}
+        .shell{animation:glow 2.8s ease-in-out infinite}
+        @keyframes hatchPulse{0%,100%{transform:scale(1);box-shadow:0 4px 16px #c41e3a44}50%{transform:scale(1.08);box-shadow:0 6px 24px #c41e3a66}}
+        @keyframes starFloat{0%{opacity:0.15}50%{opacity:0.5}100%{opacity:0.15}}
+        @keyframes subtleFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+      `}</style>
+
+      {/* Floating stars in background */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+        {Array.from({ length: 20 }, (_, i) => (
+          <div key={i} style={{
+            position: "absolute",
+            left: (i * 37 + 13) % 100 + "%",
+            top: (i * 23 + 7) % 80 + "%",
+            width: 2, height: 2, borderRadius: "50%",
+            background: "#fff",
+            animation: "starFloat " + (2 + (i % 3)) + "s ease-in-out " + (i * 0.3) + "s infinite",
+          }} />
+        ))}
+      </div>
 
       <div className="shell" style={{
         background: "#0d2240",
@@ -2674,24 +2800,33 @@ function StartScreen({ onCreate }) {
         width: "100%",
         overflow: "hidden",
         border: "1px solid #ffffff15",
+        position: "relative",
       }}>
         <div style={{
           background: "linear-gradient(135deg, #c41e3a, #8b1525)",
-          padding: "10px 0",
+          padding: "12px 0 10px",
           textAlign: "center",
         }}>
-          <div style={{ fontSize: 28, color: "#fff", letterSpacing: 3, textShadow: "0 2px 8px #0005" }}>KIRKOGOTCHI</div>
+          <div style={{ fontSize: 30, color: "#fff", letterSpacing: 4, textShadow: "0 2px 8px #0005" }}>KIRKOGOTCHI</div>
+          <div style={{
+            fontSize: 7, fontFamily: "'Press Start 2P',monospace", color: "#ffffff88",
+            marginTop: 2, letterSpacing: 1,
+            opacity: tagFade ? 1 : 0,
+            transition: "opacity 0.3s ease",
+          }}>{tagline}</div>
         </div>
         <div style={{ padding: "12px 12px 16px", textAlign: "center" }}>
           <div style={{ background: "#0a0a0a", borderRadius: 10, padding: 4, boxShadow: "inset 0 2px 8px #000a" }}>
             <div style={{ background: "#dce8f5", borderRadius: 7, padding: "18px 10px 10px" }}>
-              <svg viewBox="0 0 100 80" style={{ width: 160, display: "block", margin: "0 auto" }}>
-                <g transform="translate(50, 34)">
-                  <Kirk stage="adult" mood="happy" faceSize={dfs} frame={f} scale={0.95} />
-                </g>
-              </svg>
+              <div style={{ animation: "subtleFloat 3s ease-in-out infinite" }}>
+                <svg viewBox="0 0 100 80" style={{ width: 170, display: "block", margin: "0 auto" }}>
+                  <g transform="translate(50, 34)">
+                    <Kirk stage="adult" mood="happy" faceSize={dfs} frame={f} scale={0.95} />
+                  </g>
+                </svg>
+              </div>
 
-              <div style={{ fontSize: 9, color: "#1a3a6a", letterSpacing: 1, marginTop: 4, marginBottom: 4 }}>Name your Kirkie</div>
+              <div style={{ fontSize: 10, color: "#1a3a6a", letterSpacing: 1, marginTop: 6, marginBottom: 6, fontFamily: "'Bangers',cursive" }}>Name your Kirkie</div>
               <input
                 type="text"
                 maxLength={10}
@@ -2705,7 +2840,7 @@ function StartScreen({ onCreate }) {
                   borderBottom: "2.5px solid #1a3a6a",
                   color: "#1a3a6a",
                   fontFamily: "'Bangers',cursive",
-                  fontSize: 22,
+                  fontSize: 24,
                   textAlign: "center",
                   outline: "none",
                   width: "80%",
@@ -2715,17 +2850,36 @@ function StartScreen({ onCreate }) {
               />
             </div>
           </div>
-          <div style={{ marginTop: 12 }}>
-            <ABtn label="HATCH" emoji="🇺🇸" bg="#c41e3a" onClick={() => { if (name.trim()) onCreate(name.trim()); }} off={!name.trim()} />
+          <div style={{ marginTop: 14 }}>
+            <button
+              onClick={() => { if (name.trim()) onCreate(name.trim()); }}
+              disabled={!name.trim()}
+              style={{
+                background: name.trim() ? "linear-gradient(135deg, #c41e3a, #e8354e)" : "#333",
+                border: "2px solid #8b1525",
+                borderRadius: 24,
+                color: "#fff",
+                fontFamily: "'Bangers',cursive",
+                fontSize: 18,
+                padding: "10px 36px",
+                cursor: name.trim() ? "pointer" : "not-allowed",
+                letterSpacing: 3,
+                animation: name.trim() ? "hatchPulse 2s ease-in-out infinite" : "none",
+                transition: "background 0.2s",
+                textShadow: "0 1px 4px #0005",
+              }}
+            >
+              🇺🇸 HATCH
+            </button>
           </div>
-          <div style={{ fontSize: 9, color: "#fff3", marginTop: 10, lineHeight: 1.8, fontFamily: "'Press Start 2P',monospace" }}>
-            Keep your Kirkie fed & tweeting
+          <div style={{ fontSize: 8, color: "#fff4", marginTop: 12, lineHeight: 2, fontFamily: "'Press Start 2P',monospace" }}>
+            Feed him. Tweet for him. Own the libs.
             <br />
-            Keep the face the right size
+            <span style={{ color: "#c41e3a88" }}>If two stats hit zero... Valhalla.</span>
           </div>
           {hatched > 0 && (
-            <div style={{ fontSize: 8, color: "#c41e3a55", fontFamily: "'Press Start 2P',monospace", marginTop: 6 }}>
-              Kirkies lost: {hatched}
+            <div style={{ fontSize: 8, color: "#c41e3a55", fontFamily: "'Press Start 2P',monospace", marginTop: 8 }}>
+              🕊️ Kirkies lost: {hatched}
             </div>
           )}
         </div>
