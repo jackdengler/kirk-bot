@@ -594,7 +594,7 @@ function getIdlePose(frame, mood, energy) {
 }
 
 // ═══ KIRK FACE ═══
-function Kirk({ stage, mood, faceSize, frame, dark, scale, blink, energy, hunger }) {
+function Kirk({ stage, mood, faceSize, frame, dark, scale, blink, energy, hunger, activity }) {
   const s = scale || 1;
   const skin = dark ? "#9a8a70" : "#f4d0a8";
   const skinSh = dark ? "#7a6a50" : "#e8b888";
@@ -612,6 +612,10 @@ function Kirk({ stage, mood, faceSize, frame, dark, scale, blink, energy, hunger
 
   // Idle micro-behaviors
   const idle = getIdlePose(frame, mood, energy);
+  // Center eyes during wave, look down during tie/phone
+  if (activity === "wave") { idle.eyeX = 0; idle.tilt = 0; }
+  if (activity === "tie") { idle.eyeX = 0; idle.tilt = 2; } // look down slightly
+  if (activity === "phone") { idle.eyeX = 2; idle.tilt = 1.5; } // look at phone
   const breathe = Math.sin((frame || 0) * 0.8) * 0.4 * s;
   const bob = [0, -0.5, -1, -0.5][(frame || 0) % 4] * s + breathe;
   // Shiver when very hungry
@@ -1938,6 +1942,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [comboTimer, setComboTimer] = useState(null);
   const [floatingEmoji, setFloatingEmoji] = useState(null);
   const [holdingItem, setHoldingItem] = useState(null); // emoji Kirk is holding
+  const [idleActivity, setIdleActivity] = useState(null); // { type: "phone"|"mic"|"wave"|"tie"|"doze"|"rage", start: Date.now() }
   const [foodRoulette, setFoodRoulette] = useState(null); // { foods, currentIdx, finalIdx, spinning }
   const [lastFood, setLastFood] = useState(null); // last food eaten for display
   const [ownBattle, setOwnBattle] = useState(null); // { opponent, meme, taps, phase, timer, tier, streak }
@@ -2113,6 +2118,73 @@ window.Kirkogotchi = function Kirkogotchi() {
     }, 9000);
     return () => clearInterval(iv);
   }, [pet, rally, lightsOff]);
+
+  // ═══ AMBIENT ACTIVITIES — Kirk does things on his own ═══
+  const AMBIENT_TWEETS = [
+    "Just posted.",
+    "Ratio incoming...",
+    "Thread 🧵",
+    "📱 Tweeting...",
+    "Hot take sent.",
+    "Posting through it.",
+  ];
+  useEffect(() => {
+    if (!pet || !pet.alive || rally || lightsOff || showOnboarding) return;
+    const iv = setInterval(() => {
+      // Don't start activity if one is already running or user is doing something
+      if (act || ownBattle || foodRoulette) return;
+      // Random delay variation: skip ~40% of ticks for natural feel
+      if (Math.random() < 0.4) return;
+
+      const stage = stageOf(pet.age);
+      const hasSuit = stage === "teen" || stage === "adult";
+
+      // Build weighted activity pool
+      var pool = [];
+      pool.push({ type: "phone", weight: 5 });
+      pool.push({ type: "rage", weight: 3 });
+      pool.push({ type: "wave", weight: 3 });
+      if (hasSuit) pool.push({ type: "tie", weight: 2 });
+      pool.push({ type: "mic", weight: 2 });
+      if (pet.energy < 35) pool.push({ type: "doze", weight: 4 });
+
+      // Weighted random pick
+      var total = pool.reduce(function(s, p) { return s + p.weight; }, 0);
+      var r = Math.random() * total;
+      var pick = pool[0].type;
+      for (var i = 0; i < pool.length; i++) {
+        r -= pool[i].weight;
+        if (r <= 0) { pick = pool[i].type; break; }
+      }
+
+      var duration = pick === "phone" ? 2500 : pick === "mic" ? 2200 : pick === "wave" ? 1800 : pick === "tie" ? 1500 : pick === "doze" ? 2800 : 1800;
+
+      setIdleActivity({ type: pick, start: Date.now() });
+
+      // Auto-show a tweet bubble for phone activity
+      if (pick === "phone") {
+        setTimeout(function() {
+          setIdleMsg(AMBIENT_TWEETS[Math.floor(Math.random() * AMBIENT_TWEETS.length)]);
+          setTimeout(function() { setIdleMsg(""); }, 1800);
+        }, 600);
+      }
+      // Doze gets a little message too
+      if (pick === "doze") {
+        setTimeout(function() {
+          setIdleMsg("*snort* ...huh?! I'm awake!");
+          setTimeout(function() { setIdleMsg(""); }, 1500);
+        }, duration - 800);
+      }
+      // Rage gets a quip
+      if (pick === "rage") {
+        setIdleMsg("Who POSTED this?!");
+        setTimeout(function() { setIdleMsg(""); }, 1500);
+      }
+
+      setTimeout(function() { setIdleActivity(null); }, duration);
+    }, 15000 + Math.random() * 10000); // every 15-25 seconds
+    return function() { clearInterval(iv); };
+  }, [pet, rally, lightsOff, act, ownBattle, foodRoulette, showOnboarding]);
 
   // Game tick
   useEffect(() => {
@@ -2558,6 +2630,15 @@ window.Kirkogotchi = function Kirkogotchi() {
   var stage = pet.alive ? stageOf(pet.age) : "baby";
   var ov = Math.round((pet.hunger + pet.happiness + pet.energy + pet.clout) / 4);
   var mood = !pet.alive ? "dead" : lightsOff ? "sleep" : ov > 70 ? "happy" : ov < 25 ? "sad" : "neutral";
+  // Ambient activity mood overrides
+  if (idleActivity) {
+    if (idleActivity.type === "rage") mood = "angry";
+    else if (idleActivity.type === "mic") mood = frame % 3 === 0 ? "angry" : "happy";
+    else if (idleActivity.type === "wave") mood = "happy";
+    else if (idleActivity.type === "doze" && Date.now() - idleActivity.start < 2000) mood = "sleep";
+    else if (idleActivity.type === "doze") mood = "happy"; // startled awake
+    else if (idleActivity.type === "phone") mood = "neutral";
+  }
   var fs = faceSlider;
   var dark = lightsOff;
   var displayMsg = msg || tapReaction || idleMsg;
@@ -2755,7 +2836,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                       )}
 
                       <g transform="translate(50, 40) scale(1.15)">
-                        <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} gender={pet.gender} blink={blinking} energy={pet.energy} hunger={pet.hunger} />
+                        <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} gender={pet.gender} blink={blinking} energy={pet.energy} hunger={pet.hunger} activity={idleActivity ? idleActivity.type : null} />
                         {/* Held item */}
                         {holdingItem && (
                           <text x={12} y={-2} fontSize="8" opacity={0.9}>
@@ -2763,6 +2844,80 @@ window.Kirkogotchi = function Kirkogotchi() {
                             <animate attributeName="opacity" from="1" to="0.3" dur="1.2s" fill="freeze" />
                             {holdingItem}
                           </text>
+                        )}
+
+                        {/* ═══ AMBIENT ACTIVITY VISUALS ═══ */}
+                        {idleActivity && idleActivity.type === "phone" && (
+                          <g>
+                            <text x={10} y={8} fontSize="7" opacity={0.85}>
+                              <animate attributeName="opacity" from="0" to="0.85" dur="0.3s" fill="freeze" />
+                              📱
+                            </text>
+                            {/* tiny tweet icon floats up */}
+                            <text x={16} y={-4} fontSize="4" opacity={0.6}>
+                              <animate attributeName="y" from="0" to="-8" dur="2s" fill="freeze" />
+                              <animate attributeName="opacity" from="0" to="0.7" dur="0.8s" fill="freeze" />
+                              💬
+                            </text>
+                          </g>
+                        )}
+                        {idleActivity && idleActivity.type === "mic" && (
+                          <g>
+                            <text x={-16} y={6} fontSize="7" opacity={0.85}>
+                              <animate attributeName="opacity" from="0" to="0.85" dur="0.3s" fill="freeze" />
+                              🎤
+                            </text>
+                            {/* debate energy lines */}
+                            <text x={12} y={-6} fontSize="4" opacity={frame % 2 === 0 ? 0.7 : 0.3}>
+                              {frame % 3 === 0 ? "💥" : "🗯️"}
+                            </text>
+                          </g>
+                        )}
+                        {idleActivity && idleActivity.type === "wave" && (
+                          <g>
+                            {/* hand wave emoji bouncing */}
+                            <text x={14} y={-6} fontSize="6" opacity={0.85}>
+                              <animate attributeName="y" values="-6;-9;-6;-9;-6" dur="1.5s" repeatCount="indefinite" />
+                              👋
+                            </text>
+                          </g>
+                        )}
+                        {idleActivity && idleActivity.type === "tie" && (
+                          <g>
+                            {/* hand near chest adjusting tie */}
+                            <text x={-2} y={18} fontSize="5" opacity={0.7}>
+                              <animate attributeName="x" values="-2;0;-2" dur="0.8s" repeatCount="2" />
+                              ✋
+                            </text>
+                          </g>
+                        )}
+                        {idleActivity && idleActivity.type === "doze" && (
+                          <g>
+                            {/* Zzz floating up */}
+                            <text x={10} y={-8} fontSize="5" fontFamily="'Bangers',cursive" fill="#6a7a9a" opacity={0.6}>
+                              <animate attributeName="y" from="-4" to="-14" dur="2.5s" fill="freeze" />
+                              <animate attributeName="opacity" from="0.7" to="0.2" dur="2.5s" fill="freeze" />
+                              Z
+                            </text>
+                            <text x={16} y={-12} fontSize="7" fontFamily="'Bangers',cursive" fill="#6a7a9a" opacity={0.4}>
+                              <animate attributeName="y" from="-8" to="-18" dur="2.5s" fill="freeze" />
+                              <animate attributeName="opacity" from="0.5" to="0.1" dur="2.5s" fill="freeze" />
+                              Z
+                            </text>
+                          </g>
+                        )}
+                        {idleActivity && idleActivity.type === "rage" && (
+                          <g>
+                            {/* anger marks */}
+                            <text x={12} y={-12} fontSize="5" opacity={0.8}>
+                              <animate attributeName="opacity" values="0.8;0.4;0.8" dur="0.5s" repeatCount="indefinite" />
+                              💢
+                            </text>
+                            <text x={-14} y={-10} fontSize="4" opacity={0.5}>
+                              <animate attributeName="opacity" values="0.5;0.2;0.5" dur="0.6s" repeatCount="indefinite" />
+                              💢
+                            </text>
+                          </g>
                         )}
                       </g>
 
