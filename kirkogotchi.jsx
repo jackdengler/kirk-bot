@@ -231,6 +231,11 @@ const ACHIEVEMENTS = [
   { id: "streak3", icon: "🔥", title: "3 DAY STREAK", desc: "Played 3 days in a row", check: (s) => s.streak >= 3 },
   { id: "streak7", icon: "💎", title: "WEEKLY WARRIOR", desc: "7 day streak", check: (s) => s.streak >= 7 },
   { id: "deaths3", icon: "💀", title: "VALHALLA FREQUENT FLYER", desc: "Lost 3 Kirkies", check: (s) => s.deaths >= 3 },
+  { id: "feed10", icon: "🍔", title: "COMPETITIVE EATER", desc: "Fed Kirkie 10 times", check: (s) => s.feeds >= 10 },
+  { id: "feed50", icon: "🍟", title: "MUKBANG PATRIOT", desc: "Fed Kirkie 50 times", check: (s) => s.feeds >= 50 },
+  { id: "refused_food", icon: "🥑", title: "CULINARY BETRAYAL", desc: "Tried to feed Kirk liberal food", check: (s) => s.foodsRefused >= 1 },
+  { id: "rare_food", icon: "📜", title: "GOURMET PATRIOT", desc: "Found a rare food item", check: (s) => s.rareFoods >= 1 },
+  { id: "constitution_eaten", icon: "🇺🇸", title: "ATE THE CONSTITUTION", desc: "Kirk consumed the founding document", check: (s) => s.constitutionEaten >= 1 },
 ];
 
 const STAGE_NUM = { egg: 0, baby: 1, child: 2, teen: 3, adult: 4 };
@@ -318,6 +323,80 @@ function tone(freq, dur, vol, type) {
 }
 
 function sfxFeed() { tone(330, 0.05); setTimeout(() => tone(440, 0.05), 60); setTimeout(() => tone(550, 0.07), 120); }
+function sfxChomp() { tone(180, 0.04, 0.05); setTimeout(() => tone(220, 0.03, 0.04), 50); setTimeout(() => tone(180, 0.04, 0.05), 100); }
+function sfxRefuse() { tone(200, 0.1, 0.05, "sawtooth"); setTimeout(() => tone(150, 0.15, 0.04, "sawtooth"), 120); }
+function sfxRareDrop() { [0, 60, 120, 180, 240].forEach((t, i) => setTimeout(() => tone([523, 659, 784, 1047, 1318][i], 0.1, 0.05, "triangle"), t)); }
+function sfxSpin() { tone(600 + Math.random() * 400, 0.02, 0.03); }
+
+// ═══ KIRK'S FOOD MENU ═══
+const KIRK_FOODS = [
+  // COMMON TIER — conservative comfort food canon
+  { id: "hamberder", emoji: "🍔", name: "Hamberder", hunger: 22, happiness: 5, energy: 4, clout: 0, weight: 20,
+    quotes: ["HAMBERDER TIME baby!", "The official food of WINNERS", "McDonald's? No. FREEDOM's.", "One thousand hamberders!"] },
+  { id: "diet_coke", emoji: "🥤", name: "Diet Coke", hunger: 8, happiness: 10, energy: 18, clout: 3, weight: 18,
+    quotes: ["The drink of CHAMPIONS", "I have never seen a thin person drinking Diet Coke. Oh wait", "12 a day keeps the libs AWAY", "Liquid FREEDOM"] },
+  { id: "well_done_steak", emoji: "🥩", name: "Well-Done Steak w/ Ketchup", hunger: 28, happiness: 8, energy: 5, clout: -3, weight: 14,
+    quotes: ["Well done. WITH ketchup. Fight me.", "Medium rare is for SOCIALISTS", "Ketchup is a vegetable. Checkmate, libs", "Gordon Ramsay blocked me. Worth it."] },
+  { id: "freedom_fries", emoji: "🍟", name: "Freedom Fries", hunger: 18, happiness: 8, energy: 3, clout: 5, weight: 16,
+    quotes: ["They're not FRENCH. They're AMERICAN.", "Freedom never tasted so salty", "Every fry is a little FLAG", "Dipped in LIBERTY sauce"] },
+  { id: "chick_fil_a", emoji: "🐔", name: "Chick-fil-A", hunger: 25, happiness: 12, energy: 5, clout: 8, weight: 15,
+    quotes: ["My pleasure. No, MY pleasure.", "Closed on Sundays. RESPECT.", "The Lord's Chicken", "The only chicken I trust"] },
+  { id: "protein_shake", emoji: "🥛", name: "ALPHA FUEL Protein Shake", hunger: 12, happiness: 3, energy: 22, clout: 5, weight: 10,
+    quotes: ["GAINS for the CAUSE", "Bench press the libs. Fuel up first.", "Tastes like TESTOSTERONE and VICTORY", "Soy? SOY?! This is WHEY, brother."] },
+
+  // POWER TIER — bigger stat boosts, less common
+  { id: "rally_hotdog", emoji: "🌭", name: "Rally Hot Dog", hunger: 20, happiness: 15, energy: 8, clout: 10, weight: 8,
+    quotes: ["Fresh from the RALLY GRILL!", "These hot dogs are the BEST. Believe me.", "Tastes like 10,000 screaming patriots", "The rally dog HITS DIFFERENT"] },
+  { id: "donor_dinner", emoji: "🍽️", name: "Donor Dinner Filet Mignon", hunger: 30, happiness: 15, energy: 5, clout: 15, weight: 5,
+    quotes: ["$10,000 a plate. WORTH IT.", "Dining with VERY important people", "Can't say who else was at the table...", "This steak costs more than your degree"] },
+  { id: "trump_steak", emoji: "🥩", name: "Trump Steak", hunger: 30, happiness: 10, energy: 8, clout: 12, weight: 5,
+    quotes: ["The GREATEST steak. Many people are saying it.", "Trump Steaks: SOLD OUT (at Sharper Image)", "Cooked to PERFECTION (well done, ketchup)", "A steak fit for a PRESIDENT"] },
+
+  // CURSED TIER — Kirk REFUSES these (no hunger gain, funny reactions)
+  { id: "avocado_toast", emoji: "🥑", name: "Avocado Toast", hunger: 0, happiness: -5, energy: 0, clout: -8, weight: 8, refused: true,
+    quotes: ["This is why you can't afford a HOUSE!", "I'd rather EAT the Constitution", "Millennial POISON", "Get this COMMUNIST BREAD away from me"] },
+  { id: "impossible_burger", emoji: "🌱", name: "Impossible Burger", hunger: 0, happiness: -8, energy: 0, clout: -10, weight: 6, refused: true,
+    quotes: ["IMPOSSIBLE? More like UNACCEPTABLE.", "This is NOT a burger. This is PROPAGANDA.", "Bill Gates wants me to eat THIS?!", "I can taste the SOCIALISM"] },
+  { id: "oat_milk", emoji: "🥛", name: "Oat Milk Latte", hunger: 0, happiness: -3, energy: 5, clout: -12, weight: 6, refused: true,
+    quotes: ["Oat milk is a PSYOP", "Real patriots drink WHOLE MILK", "My ancestors didn't die for OAT WATER", "This is what happens when you defund dairy"] },
+  { id: "kombucha", emoji: "🍵", name: "Kombucha", hunger: 0, happiness: -5, energy: 3, clout: -10, weight: 5, refused: true,
+    quotes: ["It's ALIVE?! Like SOCIALISM?!", "This tastes like a liberal arts degree", "Fermented tea? Next you'll want me to MEDITATE", "I can feel my testosterone DROPPING"] },
+
+  // RARE/SPECIAL TIER — trigger unique moments
+  { id: "constitution", emoji: "📜", name: "The Constitution", hunger: 5, happiness: 25, energy: 10, clout: 25, weight: 2, rare: true,
+    quotes: ["*takes a bite* DELICIOUS. The Founding Fathers COOKED.", "*chews* Amendment flavor... EXQUISITE", "Tastes like FREEDOM and old parchment", "I can taste the Second Amendment. It's the BEST one."] },
+  { id: "lib_tears", emoji: "😭", name: "Liberal Tears", hunger: 10, happiness: 30, energy: 15, clout: 20, weight: 2, rare: true,
+    quotes: ["*sips* Mmm. Salty. DELICIOUS.", "Locally sourced from Twitter dot com", "Pairs great with hamberders", "The FINEST vintage. Election night 2016."] },
+  { id: "ben_shapiro_cookies", emoji: "🍪", name: "Ben Shapiro's Wife's Cookies", hunger: 15, happiness: 20, energy: 5, clout: 15, weight: 2, rare: true,
+    quotes: ["She's a DOCTOR, you know. A DOCTOR who BAKES.", "Dry? These are CRISPY. There's a DIFFERENCE.", "The cookies of FACTS and LOGIC", "Ben said I could have TWO. I took three."] },
+  { id: "pillow", emoji: "🛏️", name: "MyPillow Snack (??)", hunger: 3, happiness: 5, energy: 30, clout: 8, weight: 3, rare: true,
+    quotes: ["Use promo code KIRK for 50% off!", "It's... chewy? But I feel RESTED.", "Mike said it's edible. Mike wouldn't LIE.", "Tastes like ENTREPRENEURSHIP"] },
+];
+
+// Weighted random food selection
+function pickFood() {
+  const totalWeight = KIRK_FOODS.reduce((sum, f) => sum + f.weight, 0);
+  let r = Math.random() * totalWeight;
+  for (const food of KIRK_FOODS) {
+    r -= food.weight;
+    if (r <= 0) return food;
+  }
+  return KIRK_FOODS[0];
+}
+
+// Pick N unique foods for the roulette display
+function pickFoodRoulette(count) {
+  const foods = [];
+  const used = new Set();
+  while (foods.length < count) {
+    const f = pickFood();
+    if (!used.has(f.id)) {
+      used.add(f.id);
+      foods.push(f);
+    }
+  }
+  return foods;
+}
 function sfxTweet() { tone(880, 0.03, 0.04); setTimeout(() => tone(1100, 0.03, 0.04), 40); setTimeout(() => tone(1320, 0.05, 0.04), 80); }
 function sfxOwn() { tone(220, 0.06, 0.05); setTimeout(() => tone(440, 0.06, 0.05), 80); setTimeout(() => tone(880, 0.1, 0.07), 160); }
 function sfxClean() { tone(660, 0.03); setTimeout(() => tone(880, 0.03), 40); setTimeout(() => tone(1100, 0.04), 80); }
@@ -1412,7 +1491,7 @@ function StreakBanner({ streak, isNew }) {
 function Onboarding({ onDone }) {
   const [step, setStep] = useState(0);
   const tips = [
-    { icon: "🍔", title: "FEED YOUR KIRKIE", desc: "Tap buttons to keep stats up. If two stats hit zero... Valhalla." },
+    { icon: "🍔", title: "FEED YOUR KIRKIE", desc: "Tap FEED to spin the food roulette! Different foods = different stats. Watch out for liberal food..." },
     { icon: "👆", title: "TAP YOUR KIRKIE", desc: "Tap Kirk to interact! He'll react and say funny things." },
     { icon: "🏆", title: "EARN ACHIEVEMENTS", desc: "Tweet, debate, survive — unlock achievements and climb the ranks." },
   ];
@@ -1768,7 +1847,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [shake, setShake] = useState(false);
   const [kirkifyIdx, setKirkifyIdx] = useState(0);
   const [idleMsg, setIdleMsg] = useState("");
-  const [stats, setStats] = useState({ tweets: 0, libsOwned: 0, feeds: 0, cleans: 0, kirkifies: 0, flawlessDebates: 0, maxAge: 0, maxStage: 0, deaths: 0, streak: 0 });
+  const [stats, setStats] = useState({ tweets: 0, libsOwned: 0, feeds: 0, cleans: 0, kirkifies: 0, flawlessDebates: 0, maxAge: 0, maxStage: 0, deaths: 0, streak: 0, foodsRefused: 0, rareFoods: 0, constitutionEaten: 0 });
   const [showMemorial, setShowMemorial] = useState(false);
   const [blinking, setBlinking] = useState(false);
   const [bgIdx, setBgIdx] = useState(-1);
@@ -1784,6 +1863,9 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [comboTimer, setComboTimer] = useState(null);
   const [floatingEmoji, setFloatingEmoji] = useState(null);
   const [holdingItem, setHoldingItem] = useState(null); // emoji Kirk is holding
+  const [foodRoulette, setFoodRoulette] = useState(null); // { foods, currentIdx, finalIdx, spinning }
+  const [lastFood, setLastFood] = useState(null); // last food eaten for display
+  const foodSpinRef = useRef(null);
   const poopsRef = useRef([]);
   const unlockedRef = useRef(new Set());
 
@@ -2107,31 +2189,84 @@ window.Kirkogotchi = function Kirkogotchi() {
       return;
     }
 
-    // feed, tweet, clean, own
-    if (type === "feed") { sfxFeed(); setEvolveFlash(true); setTimeout(() => setEvolveFlash(false), 100); }
+    // feed — now triggers food roulette spin
+    if (type === "feed") {
+      if (pet.hunger >= 95) { setMsg("Already full!"); setAct(null); return; }
+      // Start food roulette: pick 5 foods, spin through them, land on the last one
+      var rouletteFoods = pickFoodRoulette(5);
+      var finalFood = rouletteFoods[rouletteFoods.length - 1];
+      setFoodRoulette({ foods: rouletteFoods, currentIdx: 0, finalIdx: rouletteFoods.length - 1, spinning: true, landed: false });
+      setMsg("");
+      // Animate through the foods with accelerating delay
+      var spinIdx = 0;
+      var delays = [80, 100, 140, 200, 320]; // gets slower = slot machine feel
+      function spinNext() {
+        if (spinIdx < rouletteFoods.length - 1) {
+          sfxSpin();
+          spinIdx++;
+          setFoodRoulette(prev => prev ? { ...prev, currentIdx: spinIdx, spinning: true } : null);
+          setTimeout(spinNext, delays[spinIdx] || 300);
+        } else {
+          // LANDED — apply the food
+          setFoodRoulette(prev => prev ? { ...prev, spinning: false, landed: true } : null);
+          var food = finalFood;
+          setLastFood(food);
+          if (food.rare) { sfxRareDrop(); } else if (food.refused) { sfxRefuse(); } else { sfxFeed(); sfxChomp(); }
+          setEvolveFlash(true); setTimeout(() => setEvolveFlash(false), 150);
+          var quote = food.quotes[Math.floor(Math.random() * food.quotes.length)];
+          setPet(prev2 => {
+            var n = { ...prev2 };
+            if (food.refused) {
+              // Kirk REFUSES — small stat penalties, big comedy
+              n.happiness = Math.max(0, n.happiness + food.happiness);
+              n.clout = Math.max(0, n.clout + food.clout);
+              n.energy = Math.min(100, Math.max(0, n.energy + food.energy));
+              setMsg(food.emoji + " " + quote);
+              addLog(food.emoji + " REFUSED: " + food.name);
+              setParticles(p2 => [...p2, ...mkParticles(50, 40, "#22c55e"), ...mkParticles(48, 38, "#86efac")]);
+              setStats(s => ({ ...s, feeds: (s.feeds || 0) + 1, foodsRefused: (s.foodsRefused || 0) + 1 }));
+              float("🤢");
+              setHoldingItem("🚫"); setTimeout(() => setHoldingItem(null), 1500);
+            } else {
+              // Kirk EATS — apply food stats
+              n.hunger = Math.min(100, n.hunger + food.hunger);
+              n.happiness = Math.min(100, n.happiness + food.happiness);
+              n.energy = Math.min(100, n.energy + food.energy);
+              n.clout = Math.min(100, Math.max(0, n.clout + food.clout));
+              setMsg(food.emoji + " " + quote);
+              addLog(food.emoji + " " + food.name);
+              var particleColor = food.rare ? "#fbbf24" : "#c41e3a";
+              var particleColor2 = food.rare ? "#f59e0b" : "#f59e0b";
+              setParticles(p2 => [...p2, ...mkParticles(50, 40, particleColor), ...mkParticles(50, 42, particleColor2)]);
+              setStats(s => {
+                var ns = { ...s, feeds: (s.feeds || 0) + 1 };
+                if (food.rare) ns.rareFoods = (s.rareFoods || 0) + 1;
+                if (food.id === "constitution") ns.constitutionEaten = (s.constitutionEaten || 0) + 1;
+                return ns;
+              });
+              float(food.emoji);
+              setHoldingItem(food.emoji); setTimeout(() => setHoldingItem(null), 1500);
+            }
+            return n;
+          });
+          // Clear roulette after a moment
+          setTimeout(() => setFoodRoulette(null), 2000);
+        }
+      }
+      sfxSpin();
+      setTimeout(spinNext, delays[0]);
+      // Set act timeout longer to account for spin
+      setTimeout(() => { setAct(null); setMsg(""); }, 3000);
+      return; // early return — feed has its own timeout
+    }
+
+    // tweet, clean, own
     if (type === "tweet") { sfxTweet(); setEvolveFlash(true); setTimeout(() => setEvolveFlash(false), 80); }
     if (type === "clean") sfxClean();
     if (type === "own") sfxOwn();
 
     setPet(prev => {
       var n = { ...prev };
-      if (type === "feed") {
-        if (n.hunger >= 95) { setMsg("Already full!"); setAct(null); return prev; }
-        n.hunger = Math.min(100, n.hunger + 22);
-        n.energy = Math.min(100, n.energy + 4);
-        var feedMsgs = n.hunger < 30
-          ? ["🍔 FINALLY! I was DYING!", "🍔 FREEDOM NEVER TASTED SO GOOD", "🍔 You SAVED me!"]
-          : n.hunger > 80
-          ? ["🍔 *chef's kiss*", "🍔 One more for the road!", "🍔 Fuel for GREATNESS"]
-          : ["🍔 Hamberder time!", "🍔 Based & fed!", "🍔 The Kirk Diet: WINNING", "🍔 Mmm. Liberty flavor.", "🍔 Patriot fuel!"];
-        setMsg(feedMsgs[Math.floor(Math.random() * feedMsgs.length)]);
-        addLog("🍔 Hamberder");
-        // Extra juicy particle burst
-        setParticles(p => [...p, ...mkParticles(50, 40, "#c41e3a"), ...mkParticles(50, 42, "#f59e0b")]);
-        setStats(s => ({ ...s, feeds: (s.feeds || 0) + 1 }));
-        float("🍔");
-        setHoldingItem("🍔"); setTimeout(() => setHoldingItem(null), 1200);
-      }
       if (type === "tweet") {
         n.happiness = Math.min(100, n.happiness + 9);
         n.clout = Math.min(100, n.clout + 13);
@@ -2180,7 +2315,7 @@ window.Kirkogotchi = function Kirkogotchi() {
     }
 
     setTimeout(() => { setAct(null); setMsg(""); }, 1500);
-  }, [pet, act, rally, lightsOff, addLog, combo, triggerCombo, float]);
+  }, [pet, act, rally, lightsOff, addLog, combo, triggerCombo, float, stats]);
 
   const endRally = useCallback((sc, misses) => {
     setRally(false);
@@ -2547,6 +2682,54 @@ window.Kirkogotchi = function Kirkogotchi() {
                       ) : (
                         <div style={{ fontSize: 6, fontFamily: "'Press Start 2P',monospace", color: "#fff5", marginTop: 2 }}>Can your friends beat this?</div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Food Roulette Spinner */}
+                  {foodRoulette && pet.alive && (
+                    <div style={{
+                      position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)",
+                      animation: "popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                      zIndex: 12,
+                    }}>
+                      <div style={{
+                        background: foodRoulette.landed
+                          ? (foodRoulette.foods[foodRoulette.currentIdx].refused ? "linear-gradient(135deg, #166534, #15803d)" : foodRoulette.foods[foodRoulette.currentIdx].rare ? "linear-gradient(135deg, #92400e, #d97706)" : "linear-gradient(135deg, #991b1b, #dc2626)")
+                          : "linear-gradient(135deg, #1e293b, #334155)",
+                        padding: "4px 10px",
+                        borderRadius: 8,
+                        display: "flex", alignItems: "center", gap: 6,
+                        boxShadow: foodRoulette.landed ? "0 0 12px #fbbf2488" : "0 3px 10px #0005",
+                        border: foodRoulette.landed
+                          ? (foodRoulette.foods[foodRoulette.currentIdx].rare ? "1.5px solid #fbbf24" : foodRoulette.foods[foodRoulette.currentIdx].refused ? "1.5px solid #4ade80" : "1.5px solid #f8717188")
+                          : "1.5px solid #475569",
+                        transition: "all 0.2s",
+                      }}>
+                        <span style={{ fontSize: 14, filter: foodRoulette.spinning ? "blur(0.5px)" : "none", transition: "filter 0.1s" }}>
+                          {foodRoulette.foods[foodRoulette.currentIdx].emoji}
+                        </span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                          <span style={{
+                            fontSize: 6, fontFamily: "'Press Start 2P',monospace",
+                            color: "#fff",
+                            whiteSpace: "nowrap",
+                            textShadow: "0 1px 3px #000a",
+                          }}>
+                            {foodRoulette.foods[foodRoulette.currentIdx].name}
+                          </span>
+                          {foodRoulette.landed && (
+                            <span style={{
+                              fontSize: 5, fontFamily: "'Press Start 2P',monospace",
+                              color: foodRoulette.foods[foodRoulette.currentIdx].refused ? "#4ade80" : foodRoulette.foods[foodRoulette.currentIdx].rare ? "#fbbf24" : "#f8717188",
+                            }}>
+                              {foodRoulette.foods[foodRoulette.currentIdx].refused ? "REFUSED!" : foodRoulette.foods[foodRoulette.currentIdx].rare ? "RARE DROP!" : "NOM NOM NOM"}
+                            </span>
+                          )}
+                        </div>
+                        {foodRoulette.landed && foodRoulette.foods[foodRoulette.currentIdx].rare && (
+                          <span style={{ fontSize: 8, animation: "pulse 0.5s infinite" }}>✨</span>
+                        )}
+                      </div>
                     </div>
                   )}
 
