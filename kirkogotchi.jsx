@@ -55,10 +55,79 @@ const DEAR_LIBS = [
   { top: "If the economy is fine,", mid: "why is my Kirkogotchi's", bot: "clout at 0%?" },
   { top: "You say walls don't work,", mid: "but my Kirk can't escape", bot: "this screen. Curious." },
   { top: "You want universal healthcare", mid: "but you can't even keep", bot: "one pixel man ALIVE?" },
-  { top: "If pronouns matter so much,", mid: "why is my Kirkogotchi's", bot: "gender just 'based'?" },
   { top: "You claim to love science,", mid: "yet you can't explain why", bot: "his face keeps SHRINKING" },
   { top: "If cancel culture isn't real,", mid: "why did my Kirkogotchi just", bot: "get RATIO'D to death?" },
 ];
+
+// ═══ OWN SYSTEM: LIB DEBATE RAPID-TAP ═══
+const LIB_OPPONENTS = [
+  { name: "College Professor", emoji: "🎓", title: "Prof. Libs McTenure", quip: "Well ACTUALLY..." },
+  { name: "CNN Anchor", emoji: "📺", title: "Anderson Coper", quip: "Sources say..." },
+  { name: "Twitter Blue Check", emoji: "✅", title: "@tolerant_progressive", quip: "This is problematic" },
+  { name: "Protest Sign Guy", emoji: "✊", title: "Chant Leader Chad", quip: "Hey hey! Ho ho!" },
+  { name: "Late Night Host", emoji: "🎤", title: "Jimmy Smugface", quip: "*audience laughs*" },
+  { name: "Reddit Mod", emoji: "🖥️", title: "u/AskMeAboutMarx", quip: "Post removed." },
+  { name: "NPR Listener", emoji: "📻", title: "Quinoa McTotebag", quip: "I heard on Fresh Air..." },
+  { name: "Soy Latte Guy", emoji: "☕", title: "Barista Philosophy BA", quip: "It's more nuanced..." },
+  { name: "Fact Checker", emoji: "🔍", title: "Mostly False Felicia", quip: "Rating: Pants on Fire" },
+  { name: "Student Activist", emoji: "📢", title: "Petition Patricia", quip: "Sign my change.org!" },
+  { name: "NYT Opinion Writer", emoji: "📰", title: "Think Piece Tiffany", quip: "In this essay I will..." },
+  { name: "Vegan at Party", emoji: "🥬", title: "Unsolicited Advice Amy", quip: "Did you know meat is—" },
+];
+
+// State-aware Dear Libs memes — picked based on Kirk's current condition
+const DEAR_LIBS_HUNGRY = [
+  { top: "You claim to fight hunger", mid: "yet you let ME starve??", bot: "FEED ME or admit defeat." },
+  { top: "If food stamps work so well", mid: "WHERE IS MY DINNER,", bot: "LIBERALS??" },
+  { top: "You say 'eat the rich'", mid: "but I haven't eaten", bot: "ANYTHING in hours." },
+];
+const DEAR_LIBS_TIRED = [
+  { top: "You want a 4-day work week", mid: "but won't let a pixel man", bot: "take a NAP??" },
+  { top: "If rest is a human right", mid: "why am I running on FUMES", bot: "right now? Curious." },
+  { top: "You say self-care matters", mid: "but I'm at 0 energy and", bot: "NOBODY CARES." },
+];
+const DEAR_LIBS_SAD = [
+  { top: "You claim to care about", mid: "mental health yet my", bot: "happiness is in the GUTTER." },
+  { top: "If therapy is so great", mid: "why won't anyone PLAY", bot: "with me? Checkmate." },
+  { top: "You preach empathy but", mid: "can't even make ONE", bot: "virtual conservative SMILE." },
+];
+const DEAR_LIBS_LOWCLOUT = [
+  { top: "You say you support free", mid: "speech but my REACH", bot: "is basically ZERO." },
+  { top: "If censorship isn't real", mid: "explain my PATHETIC", bot: "follower count. I'll wait." },
+  { top: "You claim Big Tech is fair", mid: "yet my clout is being", bot: "SUPPRESSED. Coincidence??" },
+];
+const DEAR_LIBS_THRIVING = [
+  { top: "You said I'd fail without", mid: "government help. Look at", bot: "me NOW. Pure capitalism." },
+  { top: "You claimed conservatism", mid: "was dying. I'm LITERALLY", bot: "thriving. Cope harder." },
+  { top: "If my ideas are so bad", mid: "why am I at PEAK", bot: "PERFORMANCE?? Curious." },
+];
+
+// Pick a Dear Lib meme based on Kirk's state
+function pickStateMeme(pet) {
+  if (pet.hunger < 25) return DEAR_LIBS_HUNGRY[Math.floor(Math.random() * DEAR_LIBS_HUNGRY.length)];
+  if (pet.energy < 25) return DEAR_LIBS_TIRED[Math.floor(Math.random() * DEAR_LIBS_TIRED.length)];
+  if (pet.happiness < 25) return DEAR_LIBS_SAD[Math.floor(Math.random() * DEAR_LIBS_SAD.length)];
+  if (pet.clout < 25) return DEAR_LIBS_LOWCLOUT[Math.floor(Math.random() * DEAR_LIBS_LOWCLOUT.length)];
+  if (pet.hunger > 75 && pet.energy > 75 && pet.happiness > 75) return DEAR_LIBS_THRIVING[Math.floor(Math.random() * DEAR_LIBS_THRIVING.length)];
+  return DEAR_LIBS[Math.floor(Math.random() * DEAR_LIBS.length)];
+}
+
+// Tiered result labels & stat multipliers based on tap count
+const OWN_TIERS = [
+  { min: 0, label: "meh.", color: "#94a3b8", multiplier: 0.5, reaction: "That was weak. Even for a lib." },
+  { min: 4, label: "Owned.", color: "#f97316", multiplier: 1.0, reaction: "Another lib OWNED." },
+  { min: 8, label: "DESTROYED", color: "#ef4444", multiplier: 1.5, reaction: "DESTROYED with FACTS and LOGIC!" },
+  { min: 14, label: "OBLITERATED", color: "#dc2626", multiplier: 2.0, reaction: "Absolutely OBLITERATED. Call the ambulance." },
+  { min: 22, label: "NUCLEAR", color: "#facc15", multiplier: 3.0, reaction: "NUCLEAR OWN. Geneva Convention violated." },
+];
+
+function getOwnTier(taps) {
+  var tier = OWN_TIERS[0];
+  for (var i = OWN_TIERS.length - 1; i >= 0; i--) {
+    if (taps >= OWN_TIERS[i].min) { tier = OWN_TIERS[i]; break; }
+  }
+  return tier;
+}
 
 // ═══ IDLE DIALOGUE ═══
 const IDLE_DIALOGUE = {
@@ -399,6 +468,12 @@ function pickFoodRoulette(count) {
 }
 function sfxTweet() { tone(880, 0.03, 0.04); setTimeout(() => tone(1100, 0.03, 0.04), 40); setTimeout(() => tone(1320, 0.05, 0.04), 80); }
 function sfxOwn() { tone(220, 0.06, 0.05); setTimeout(() => tone(440, 0.06, 0.05), 80); setTimeout(() => tone(880, 0.1, 0.07), 160); }
+function sfxOwnTap() { tone(600 + Math.random() * 600, 0.02, 0.04); }
+function sfxOwnFinish(tier) {
+  if (tier >= 3) { [0,50,100,150,200,250].forEach((t, i) => setTimeout(() => tone([523,659,784,1047,1318,1568][i], 0.08, 0.06, "triangle"), t)); }
+  else if (tier >= 2) { [0,70,140,210].forEach((t, i) => setTimeout(() => tone([440,660,880,1100][i], 0.07, 0.05), t)); }
+  else { tone(440, 0.1, 0.05); setTimeout(() => tone(660, 0.08, 0.04), 100); }
+}
 function sfxClean() { tone(660, 0.03); setTimeout(() => tone(880, 0.03), 40); setTimeout(() => tone(1100, 0.04), 80); }
 function sfxKirkify() { [0, 60, 120, 180].forEach((t, i) => setTimeout(() => tone(i % 2 ? 880 : 440, 0.04), t)); }
 function sfxEvolve() { [0, 100, 200, 300].forEach((t, i) => setTimeout(() => tone(523 * (1 + i * 0.25), 0.08, 0.06), t)); }
@@ -1865,6 +1940,9 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [holdingItem, setHoldingItem] = useState(null); // emoji Kirk is holding
   const [foodRoulette, setFoodRoulette] = useState(null); // { foods, currentIdx, finalIdx, spinning }
   const [lastFood, setLastFood] = useState(null); // last food eaten for display
+  const [ownBattle, setOwnBattle] = useState(null); // { opponent, meme, taps, phase, timer, tier, streak }
+  const ownTapsRef = useRef(0);
+  const ownTimerRef = useRef(null);
   const foodSpinRef = useRef(null);
   const poopsRef = useRef([]);
   const unlockedRef = useRef(new Set());
@@ -2260,10 +2338,61 @@ window.Kirkogotchi = function Kirkogotchi() {
       return; // early return — feed has its own timeout
     }
 
-    // tweet, clean, own
+    // OWN — launch rapid-tap debate inline (no view switch)
+    if (type === "own") {
+      if (pet.energy < 10) { setMsg("⚡ Need energy!"); setAct(null); return; }
+      sfxOwn();
+      var opponent = LIB_OPPONENTS[Math.floor(Math.random() * LIB_OPPONENTS.length)];
+      var meme = pickStateMeme(pet);
+      ownTapsRef.current = 0;
+      setOwnBattle({ opponent: opponent, meme: meme, taps: 0, phase: "tap", tier: null, streak: (stats.ownStreak || 0) });
+      setMsg("");
+      // 3-second timer, then resolve
+      if (ownTimerRef.current) clearTimeout(ownTimerRef.current);
+      ownTimerRef.current = setTimeout(() => {
+        var finalTaps = ownTapsRef.current;
+        var tier = getOwnTier(finalTaps);
+        var tierIdx = OWN_TIERS.indexOf(tier);
+        sfxOwnFinish(tierIdx);
+        // Apply stats based on tier
+        var baseHappy = 8, baseClout = 7, baseEnergy = 5;
+        var mult = tier.multiplier;
+        setPet(prev2 => {
+          var n2 = { ...prev2 };
+          n2.happiness = Math.min(100, n2.happiness + Math.round(baseHappy * mult));
+          n2.energy = Math.max(0, n2.energy - baseEnergy);
+          n2.clout = Math.min(100, n2.clout + Math.round(baseClout * mult));
+          return n2;
+        });
+        var newStreak = (tierIdx >= 2) ? (stats.ownStreak || 0) + 1 : 0;
+        setStats(s => ({ ...s, libsOwned: (s.libsOwned || 0) + 1, ownStreak: newStreak }));
+        var streakLabel = newStreak >= 3 ? " COMBO x" + newStreak + "!" : "";
+        // Show result phase
+        setOwnBattle(prev2 => prev2 ? { ...prev2, phase: "result", taps: finalTaps, tier: tier, streak: newStreak } : null);
+        addLog("💥 " + tier.label + " " + opponent.name + " (" + finalTaps + " taps)" + streakLabel);
+        setParticles(p => [...p, ...mkParticles(50, 40, tier.color), ...mkParticles(48, 38, tier.color)]);
+        float(tierIdx >= 3 ? "☢️" : tierIdx >= 2 ? "💀" : "💥");
+        if (newStreak >= 3) {
+          // Combo bonus
+          var comboBonus = Math.min(newStreak * 2, 10);
+          setPet(prev2 => ({ ...prev2, clout: Math.min(100, prev2.clout + comboBonus) }));
+          setParticles(p => [...p, ...mkParticles(50, 35, "#facc15")]);
+        }
+        // Auto-dismiss after 1.5s
+        setTimeout(() => {
+          setOwnBattle(null);
+          setAct(null);
+          setMsg("");
+        }, 1800);
+      }, 3000);
+      // Set act timeout longer to account for full own cycle
+      setTimeout(() => { if (!ownTimerRef.current) { setAct(null); setMsg(""); } }, 5500);
+      return;
+    }
+
+    // tweet, clean
     if (type === "tweet") { sfxTweet(); setEvolveFlash(true); setTimeout(() => setEvolveFlash(false), 80); }
     if (type === "clean") sfxClean();
-    if (type === "own") sfxOwn();
 
     setPet(prev => {
       var n = { ...prev };
@@ -2287,19 +2416,6 @@ window.Kirkogotchi = function Kirkogotchi() {
         setParticles(p => [...p, ...mkParticles(50, 50, "#3b82f6")]);
         setStats(s => ({ ...s, cleans: (s.cleans || 0) + 1 }));
         float("✨");
-      }
-      if (type === "own") {
-        if (n.energy < 10) { setMsg("⚡ Need energy!"); setAct(null); return prev; }
-        n.happiness = Math.min(100, n.happiness + 16);
-        n.energy = Math.max(0, n.energy - 7);
-        n.clout = Math.min(100, n.clout + 14);
-        setDearIdx(Math.floor(Math.random() * DEAR_LIBS.length));
-        setView("meme");
-        setTimeout(() => setView("pet"), 3000); // Auto-dismiss after 3s
-        addLog("💥 Owned the libs");
-        setParticles(p => [...p, ...mkParticles(50, 40, "#dc2626")]);
-        setStats(s => ({ ...s, libsOwned: (s.libsOwned || 0) + 1 }));
-        float("💥");
       }
       return n;
     });
@@ -2377,6 +2493,15 @@ window.Kirkogotchi = function Kirkogotchi() {
     setShowMemorial(false);
     setStats({ tweets: 0, libsOwned: 0 });
   }, []);
+
+  // Tap during OWN rapid-tap battle
+  const tapOwnBattle = useCallback(() => {
+    if (!ownBattle || ownBattle.phase !== "tap") return;
+    ownTapsRef.current += 1;
+    sfxOwnTap();
+    doShake();
+    setOwnBattle(prev => prev ? { ...prev, taps: ownTapsRef.current } : null);
+  }, [ownBattle]);
 
   // Tap on Kirk
   const tapKirk = useCallback(() => {
@@ -2529,14 +2654,6 @@ window.Kirkogotchi = function Kirkogotchi() {
               )}
               {rally ? (
                 <SniperGame onDone={endRally} />
-              ) : view === "meme" ? (
-                /* Dear Libs overlay — shown briefly when OWN is tapped */
-                <div onClick={() => setView("pet")} style={{ cursor: "pointer" }}>
-                  <DearLib data={DEAR_LIBS[dearIdx]} fs={fs} />
-                  <div style={{ textAlign: "center", padding: 3 }}>
-                    <span style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: dark ? "#5a6a8a" : "#1a3a6a88" }}>TAP TO DISMISS</span>
-                  </div>
-                </div>
               ) : view === "share" ? (
                 /* ═══ SHARE HUB — all shareable content in one scrollable view ═══ */
                 <div style={{ maxHeight: 260, overflowY: "auto", overflowX: "hidden" }}>
@@ -2733,7 +2850,126 @@ window.Kirkogotchi = function Kirkogotchi() {
                     </div>
                   )}
 
-                  {displayMsg && pet.alive && (
+                  {/* ═══ OWN BATTLE OVERLAY ═══ */}
+                  {ownBattle && pet.alive && (
+                    <div
+                      onClick={ownBattle.phase === "tap" ? tapOwnBattle : undefined}
+                      style={{
+                        position: "absolute", inset: 0, zIndex: 20, cursor: ownBattle.phase === "tap" ? "pointer" : "default",
+                        background: ownBattle.phase === "result"
+                          ? "linear-gradient(180deg, #0d2240ee, #1a0a0aee)"
+                          : "linear-gradient(180deg, #0d2240dd, #1a0a0add)",
+                        borderRadius: 7,
+                        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                        animation: "popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                        userSelect: "none", WebkitUserSelect: "none",
+                        gap: 3, padding: 6,
+                      }}
+                    >
+                      {ownBattle.phase === "tap" ? (
+                        <>
+                          {/* Opponent */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
+                            <span style={{ fontSize: 16 }}>{ownBattle.opponent.emoji}</span>
+                            <div style={{ textAlign: "center" }}>
+                              <div style={{ fontSize: 6, fontFamily: "'Press Start 2P',monospace", color: "#ff6b6b" }}>
+                                VS {ownBattle.opponent.title}
+                              </div>
+                              <div style={{ fontSize: 4.5, fontFamily: "'Press Start 2P',monospace", color: "#94a3b8", fontStyle: "italic" }}>
+                                "{ownBattle.opponent.quip}"
+                              </div>
+                            </div>
+                          </div>
+                          {/* Meme card mini */}
+                          <div style={{
+                            background: "#fff", borderRadius: 4, padding: "3px 8px", maxWidth: 160, textAlign: "center",
+                            border: "1px solid #c41e3a",
+                          }}>
+                            <div style={{ fontSize: 4, fontFamily: "'Bangers',cursive", color: "#c41e3a", letterSpacing: 1 }}>Dear Liberals,</div>
+                            <div style={{ fontSize: 4, fontFamily: "'Press Start 2P',monospace", color: "#1a3a6a", lineHeight: 1.4 }}>
+                              {ownBattle.meme.top} {ownBattle.meme.mid} {ownBattle.meme.bot}
+                            </div>
+                          </div>
+                          {/* DESTROYED meter */}
+                          <div style={{ width: "80%", marginTop: 4 }}>
+                            <div style={{
+                              background: "#1e293b", borderRadius: 4, height: 10, overflow: "hidden",
+                              border: "1px solid #475569", position: "relative",
+                            }}>
+                              <div style={{
+                                height: "100%", borderRadius: 3,
+                                width: Math.min(100, (ownBattle.taps / 22) * 100) + "%",
+                                background: ownBattle.taps >= 22 ? "linear-gradient(90deg, #facc15, #f59e0b)"
+                                  : ownBattle.taps >= 14 ? "linear-gradient(90deg, #dc2626, #ef4444)"
+                                  : ownBattle.taps >= 8 ? "linear-gradient(90deg, #ef4444, #f97316)"
+                                  : ownBattle.taps >= 4 ? "linear-gradient(90deg, #f97316, #fb923c)"
+                                  : "linear-gradient(90deg, #94a3b8, #cbd5e1)",
+                                transition: "width 0.08s, background 0.3s",
+                                boxShadow: ownBattle.taps >= 14 ? "0 0 8px #dc262688" : "none",
+                              }} />
+                              {/* Tier markers */}
+                              {[4,8,14,22].map(t => (
+                                <div key={t} style={{
+                                  position: "absolute", left: (t / 22 * 100) + "%", top: 0, bottom: 0,
+                                  width: 0.5, background: ownBattle.taps >= t ? "#fff4" : "#fff2",
+                                }} />
+                              ))}
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 1 }}>
+                              <span style={{ fontSize: 4, fontFamily: "'Press Start 2P',monospace", color: "#94a3b8" }}>
+                                {getOwnTier(ownBattle.taps).label}
+                              </span>
+                              <span style={{ fontSize: 4, fontFamily: "'Press Start 2P',monospace", color: "#facc15" }}>
+                                {ownBattle.taps} taps
+                              </span>
+                            </div>
+                          </div>
+                          {/* TAP prompt */}
+                          <div style={{
+                            fontSize: 7, fontFamily: "'Bangers',cursive", color: "#fff",
+                            letterSpacing: 3, marginTop: 2,
+                            animation: "pulse 0.4s infinite",
+                            textShadow: "0 0 8px #dc2626",
+                          }}>
+                            TAP TO DESTROY!
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* RESULT PHASE */}
+                          <div style={{
+                            fontSize: 18, fontFamily: "'Bangers',cursive",
+                            color: ownBattle.tier ? ownBattle.tier.color : "#fff",
+                            letterSpacing: 4, textShadow: "0 0 12px " + (ownBattle.tier ? ownBattle.tier.color : "#fff") + "88",
+                            animation: "popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                          }}>
+                            {ownBattle.tier ? ownBattle.tier.label : "meh."}
+                          </div>
+                          <div style={{ fontSize: 24 }}>{ownBattle.opponent.emoji}</div>
+                          <div style={{
+                            fontSize: 5.5, fontFamily: "'Press Start 2P',monospace", color: "#e2e8f0",
+                            textAlign: "center", maxWidth: 160, lineHeight: 1.5,
+                          }}>
+                            {ownBattle.tier ? ownBattle.tier.reaction : ""}
+                          </div>
+                          <div style={{ fontSize: 5, fontFamily: "'Press Start 2P',monospace", color: "#facc15", marginTop: 2 }}>
+                            {ownBattle.taps} taps  ·  x{ownBattle.tier ? ownBattle.tier.multiplier : 1} bonus
+                          </div>
+                          {ownBattle.streak >= 3 && (
+                            <div style={{
+                              fontSize: 6, fontFamily: "'Bangers',cursive", color: "#facc15",
+                              letterSpacing: 2, marginTop: 2,
+                              animation: "pulse 0.5s infinite",
+                            }}>
+                              COMBO x{ownBattle.streak}!
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {displayMsg && pet.alive && !ownBattle && (
                     <div style={{
                       position: "absolute", bottom: 8, left: "50%", transform: "translateX(-50%)",
                       animation: "popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
