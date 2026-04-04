@@ -200,26 +200,31 @@ const NEGLECT_LINES = {
     "You call this FREEDOM? I'm STARVING",
     "Even communists eat sometimes",
     "I'd eat a lib right now. That hungry.",
+    "My stomach is making sounds only whales understand",
   ],
   happiness: [
     "Even Ben Shapiro texts me back faster",
     "This is what the left wants",
     "I'm not mad. I'm DISAPPOINTED.",
+    "I have a podcast and ZERO joy",
   ],
   energy: [
     "Haven't slept since the Obama administration",
     "Running on pure ideology at this point",
     "Low energy! Sad!",
+    "My battery is at 1% and so am I",
   ],
   clout: [
     "I'm being CENSORED",
     "Big Tech is suppressing my reach",
     "Shadow banned AGAIN",
+    "My engagement is lower than my morale",
   ],
   multi: [
     "This is literally 1984",
     "You're worse than socialism",
     "I didn't die for THIS... wait",
+    "This is my villain origin story",
   ],
 };
 
@@ -257,11 +262,11 @@ const TAP_REACTIONS = [
 ];
 
 const TAP_REACTIONS_BY_STAGE = {
-  egg: ["I'm just an INTERN!", "I don't have HR yet!", "Is tapping in my contract?", "I'll tell my college advisor!"],
-  baby: ["I'm LIVE right now!", "That's going in the blog!", "My 200 followers saw that!", "Screenshot captured."],
-  child: ["We're rolling! CUT!", "That's content, baby!", "My Patreon subs just saw that!", "Playing that on the podcast."],
-  teen: ["My AUDIENCE is watching!", "That's a ratings boost!", "Going straight to the highlight reel!", "The mainstream media WISHES."],
-  adult: ["I have SECURITY for this.", "My lawyer is speed-dialing.", "That's a front page story.", "The board will hear about this."],
+  egg: ["I'm just an INTERN!", "I don't have HR yet!", "Is tapping in my contract?", "I'll tell my college advisor!", "That's not in the employee handbook!"],
+  baby: ["I'm LIVE right now!", "That's going in the blog!", "My 200 followers saw that!", "Screenshot captured.", "My Substack subscribers pay $5/month for this abuse."],
+  child: ["We're rolling! CUT!", "That's content, baby!", "My Patreon subs just saw that!", "Playing that on the podcast.", "My sound guy heard that."],
+  teen: ["My AUDIENCE is watching!", "That's a ratings boost!", "Going straight to the highlight reel!", "The mainstream media WISHES.", "That's going in the MONOLOGUE."],
+  adult: ["I have SECURITY for this.", "My lawyer is speed-dialing.", "That's a front page story.", "The board will hear about this.", "I'll buy this platform and BAN you."],
 };
 
 
@@ -763,35 +768,6 @@ function Kirk({ stage, mood, faceSize, frame, dark, scale, blink, energy, hunger
   );
 }
 
-// ═══ STAT BAR ═══
-function Bar({ icon, value, color, warn }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, flex: 1 }}>
-      <span style={{ fontSize: 11, animation: warn ? "pulse 0.6s infinite" : "none", transition: "transform 0.3s" }}>{icon}</span>
-      <div style={{ flex: 1, height: 9, background: "#1a3a6a15", borderRadius: 5, overflow: "hidden", position: "relative" }}>
-        <div style={{
-          height: "100%",
-          width: Math.max(0, value) + "%",
-          background: value < 20
-            ? "linear-gradient(90deg, #ef4444, #dc2626)"
-            : "linear-gradient(90deg, " + color + "cc, " + color + ")",
-          borderRadius: 5,
-          transition: "width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
-          boxShadow: value < 20 ? "0 0 8px #ef444466, inset 0 1px 1px #fff3" : "inset 0 1px 1px #fff2",
-        }} />
-        {/* Shine overlay */}
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "40%",
-          background: "linear-gradient(180deg, #fff2, transparent)",
-          borderRadius: "5px 5px 0 0",
-          pointerEvents: "none",
-        }} />
-      </div>
-      <span style={{ fontSize: 6, fontFamily: "'Press Start 2P',monospace", color: "#fff6", minWidth: 18, textAlign: "right" }}>{Math.round(value)}</span>
-    </div>
-  );
-}
-
 // ═══ ACTION BUTTON ═══
 function ABtn({ label, emoji, bg, onClick, off, sm }) {
   const [pressed, setPressed] = useState(false);
@@ -885,6 +861,7 @@ function SniperGame({ onDone }) {
   const [streak, setStreak] = useState(0);
   const fc = useRef(0);
   const done = useRef(false);
+  const streakTimerRef = useRef(null);
 
   // Countdown with beep for last 5 seconds
   useEffect(() => {
@@ -912,27 +889,30 @@ function SniperGame({ onDone }) {
       fc.current++;
       const elapsed = 20 - t;
 
-      // Spawn snipers — gentle start, ramps up
+      // Spawn + update snipers in one functional update to avoid stale reads
       const spawnChance = elapsed < 3 ? 0.01 : 0.02 + elapsed * 0.004;
-      if (Math.random() < spawnChance && snipers.length < (elapsed < 5 ? 2 : elapsed < 10 ? 3 : 4)) {
-        const spot = SNIPER_SPOTS[Math.floor(Math.random() * SNIPER_SPOTS.length)];
-        // Don't spawn on occupied spots
-        const occupied = snipers.some(s => Math.abs(s.x - spot.x) < 10 && Math.abs(s.y - spot.y) < 10);
-        if (!occupied) {
-          setSnipers(p => [...p, {
-            id: Math.random(),
-            x: spot.x + (Math.random() - 0.5) * 6,
-            y: spot.y - 2 - Math.random() * 4,
-            timer: 100 - Math.min(elapsed * 3, 50), // frames until they shoot (starts slow, gets faster)
-            phase: 0, // 0=glint, increases each frame
-          }]);
-        }
-      }
+      const maxSnipers = elapsed < 5 ? 2 : elapsed < 10 ? 3 : 4;
 
-      // Update snipers
       setSnipers(p => {
+        // Spawn snipers — gentle start, ramps up
+        let spawned = p;
+        if (Math.random() < spawnChance && p.length < maxSnipers) {
+          const spot = SNIPER_SPOTS[Math.floor(Math.random() * SNIPER_SPOTS.length)];
+          const occupied = p.some(s => Math.abs(s.x - spot.x) < 10 && Math.abs(s.y - spot.y) < 10);
+          if (!occupied) {
+            spawned = [...p, {
+              id: Math.random(),
+              x: spot.x + (Math.random() - 0.5) * 6,
+              y: spot.y - 2 - Math.random() * 4,
+              timer: 100 - Math.min(elapsed * 3, 50),
+              phase: 0,
+            }];
+          }
+        }
+
+        // Update snipers
         const next = [];
-        p.forEach(s => {
+        spawned.forEach(s => {
           const ns = { ...s, phase: s.phase + 1 };
           if (ns.phase >= ns.timer) {
             // SNIPER SHOOTS — you got hit
@@ -952,25 +932,24 @@ function SniperGame({ onDone }) {
       setFx(p => p.map(f => ({ ...f, l: f.l - 1 })).filter(f => f.l > 0));
     }, 50);
     return () => clearInterval(iv);
-  }, [t, snipers]);
+  }, [t]);
 
   // Tap a sniper
   function spotSniper(id, x, y) {
     setSnipers(p => p.filter(s => s.id !== id));
     setStreak(s => s + 1);
-    const streakBonus = streak >= 3 ? " x" + (streak + 1) + "!" : "";
     const pointsEarned = 1 + Math.floor(streak / 3);
     setScore(s => s + pointsEarned);
     setFx(f => [...f, { x, y, l: 18, text: pointsEarned > 1 ? "+" + pointsEarned + "!" : "SPOTTED!" }]);
+    sfxCatch();
     sfxDebateHit();
     // Quick screen shake for juice
     setSpotShake(true);
     setTimeout(() => setSpotShake(false), 80);
     // Reset streak after 2s of no spots
-    clearTimeout(spotSniper._streakTimer);
-    spotSniper._streakTimer = setTimeout(() => setStreak(0), 2000);
+    clearTimeout(streakTimerRef.current);
+    streakTimerRef.current = setTimeout(() => setStreak(0), 2000);
   }
-  spotSniper._streakTimer = null;
 
   const rating = score > 15 ? "SECRET SERVICE DIRECTOR" : score > 10 ? "SECRET SERVICE MATERIAL" : score > 6 ? "EAGLE EYE" : score > 3 ? "ALERT" : "SITTING DUCK";
 
@@ -997,7 +976,7 @@ function SniperGame({ onDone }) {
             {Array.from({ length: b.floors }, (_, f) => (
               Array.from({ length: Math.floor(b.w / 10) }, (_, wi) => (
                 <rect key={f + "-" + wi} x={b.x + 3 + wi * 10} y={97 - b.h + 5 + f * (b.h / b.floors)} width={6} height={5} rx={0.5}
-                  fill={Math.random() > 0.3 ? "#b8d4e8" : "#e8d898"} opacity={0.7} />
+                  fill={(f * 7 + wi * 13 + i * 3) % 10 > 3 ? "#b8d4e8" : "#e8d898"} opacity={0.7} />
               ))
             ))}
             {/* Rooftop edge */}
@@ -1086,17 +1065,17 @@ function SniperGame({ onDone }) {
         <text x="6" y="11" fontSize="5" fontFamily="'Bangers',cursive" fill="#fff" letterSpacing="1">🎯 SPOT THE SNIPER</text>
         <text x="100" y="11" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">UVU CAMPUS</text>
         <text x="194" y="11" fontSize="6" fontFamily="'Bangers',cursive" fill="#22c55e" textAnchor="end">{score}</text>
-        {/* Streak indicator */}
-        {streak >= 2 && (
-          <text x="194" y="136" fontSize="4" fontFamily="'Bangers',cursive" fill="#f59e0b" textAnchor="end">🔥 x{streak}</text>
-        )}
         {/* Timer bar */}
         <rect x="0" y="16" width={200 * t / 20} height="2" fill={t < 5 ? "#ef4444" : "#22c55e"}>
           {t < 5 && <animate attributeName="opacity" values="1;0.5;1" dur="0.5s" repeatCount="indefinite" />}
         </rect>
         {/* Hit indicator */}
         {hits > 0 && (
-          <text x="194" y="136" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#ef4444" textAnchor="end">💀 x{hits}</text>
+          <text x="194" y="130" fontSize="5" fontFamily="'Press Start 2P',monospace" fill="#ef4444" textAnchor="end">💀 x{hits}</text>
+        )}
+        {/* Streak indicator */}
+        {streak >= 2 && (
+          <text x="194" y="136" fontSize="4" fontFamily="'Bangers',cursive" fill="#f59e0b" textAnchor="end">🔥 x{streak}</text>
         )}
 
         {/* End screen */}
@@ -1184,10 +1163,15 @@ function MemorialScreen({ pet, stats, onReset, frame }) {
         </text>
 
         {/* Quote */}
-        <text x="100" y="120" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">{quote.length > 40 ? quote.slice(0, 40) : quote}</text>
-        {quote.length > 40 && (
-          <text x="100" y="128" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">{quote.slice(40)}</text>
-        )}
+        {(() => {
+          if (quote.length <= 40) return <text x="100" y="120" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">{quote}</text>;
+          var splitAt = quote.lastIndexOf(" ", 40);
+          if (splitAt < 20) splitAt = 40;
+          return (<g>
+            <text x="100" y="118" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">{quote.slice(0, splitAt)}</text>
+            <text x="100" y="127" fontSize="4.5" fontFamily="'Press Start 2P',monospace" fill="#c41e3a" textAnchor="middle">{quote.slice(splitAt).trim()}</text>
+          </g>);
+        })()}
 
         {/* We Are Charlie Kirk */}
         <text x="100" y="142" fontSize="3.5" fontFamily="'Press Start 2P',monospace" fill="#fff3" textAnchor="middle">
@@ -1889,19 +1873,21 @@ function ChallengeBanner({ targetAge }) {
 }
 
 // ═══ PARTICLE HELPERS ═══
-function mkParticles(cx, cy, color) {
-  return Array.from({ length: 16 }, () => {
+function mkParticles(cx, cy, color, scale) {
+  var s = scale || 1;
+  var count = Math.round(22 * s);
+  return Array.from({ length: count }, () => {
     const angle = Math.random() * Math.PI * 2;
-    const speed = 1 + Math.random() * 2.5;
+    const speed = (1.2 + Math.random() * 3.2) * s;
     return {
-      x: cx + (Math.random() - 0.5) * 6,
+      x: cx + (Math.random() - 0.5) * 8 * s,
       y: cy,
       dx: Math.cos(angle) * speed,
-      dy: Math.sin(angle) * speed - 1.5,
+      dy: Math.sin(angle) * speed - 2.0 * s,
       c: color,
-      l: 18 + Math.random() * 12,
-      ml: 30,
-      r: 0.6 + Math.random() * 1.0, // varied sizes
+      l: 20 + Math.random() * 14,
+      ml: 34,
+      r: (0.8 + Math.random() * 1.4) * s,
     };
   });
 }
@@ -1920,8 +1906,6 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [log, setLog] = useState([]);
   const [particles, setParticles] = useState([]);
   const [evolveFlash, setEvolveFlash] = useState(false);
-  const [dearIdx, setDearIdx] = useState(0);
-  const faceSlider = 1.0;
   const [kFlash, setKFlash] = useState(false);
   const [shake, setShake] = useState(false);
   const [kirkifyIdx, setKirkifyIdx] = useState(0);
@@ -1929,7 +1913,6 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [stats, setStats] = useState({ tweets: 0, libsOwned: 0, feeds: 0, cleans: 0, kirkifies: 0, flawlessDebates: 0, maxAge: 0, maxStage: 0, deaths: 0, streak: 0, foodsRefused: 0, rareFoods: 0, constitutionEaten: 0 });
   const [showMemorial, setShowMemorial] = useState(false);
   const [blinking, setBlinking] = useState(false);
-  const [bgIdx, setBgIdx] = useState(-1);
   const [tapReaction, setTapReaction] = useState("");
   const [achievementQueue, setAchievementQueue] = useState([]);
   const [showingAchievement, setShowingAchievement] = useState(null);
@@ -1939,7 +1922,7 @@ window.Kirkogotchi = function Kirkogotchi() {
   const [sharedCard, setSharedCard] = useState(null);
   const [muted, setMuted] = useState(storage.get("kirk_muted") || false);
   const [combo, setCombo] = useState(0);
-  const [comboTimer, setComboTimer] = useState(null);
+  const comboTimerRef = useRef(null);
   const [floatingEmoji, setFloatingEmoji] = useState(null);
   const [holdingItem, setHoldingItem] = useState(null); // emoji Kirk is holding
   const [idleActivity, setIdleActivity] = useState(null); // { type: "phone"|"mic"|"wave"|"tie"|"doze"|"rage", start: Date.now() }
@@ -2271,11 +2254,10 @@ window.Kirkogotchi = function Kirkogotchi() {
 
   // Combo tracker
   const triggerCombo = useCallback(() => {
-    if (comboTimer) clearTimeout(comboTimer);
+    if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
     setCombo(c => c + 1);
-    const t = setTimeout(() => setCombo(0), 3000);
-    setComboTimer(t);
-  }, [comboTimer]);
+    comboTimerRef.current = setTimeout(() => setCombo(0), 3000);
+  }, []);
 
   // Floating emoji
   const float = useCallback((emoji) => {
@@ -2317,25 +2299,6 @@ window.Kirkogotchi = function Kirkogotchi() {
         setView("pet");
         return p;
       });
-      return;
-    }
-
-    if (type === "kirkify") {
-      sfxKirkify();
-      setKFlash(true);
-      setTimeout(() => setKFlash(false), 300);
-      setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length);
-      setBgIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length);
-      setPet(p => ({
-        ...p,
-        happiness: Math.min(100, p.happiness + 3),
-        clout: Math.min(100, p.clout + 3),
-      }));
-      addLog("👤 KIRKIFIED!");
-      setMsg("👤 KIRKIFIED!");
-      setStats(s => ({ ...s, kirkifies: (s.kirkifies || 0) + 1 }));
-      setAct(null);
-      setTimeout(() => setMsg(""), 900);
       return;
     }
 
@@ -2441,8 +2404,10 @@ window.Kirkogotchi = function Kirkogotchi() {
         var streakLabel = newStreak >= 3 ? " COMBO x" + newStreak + "!" : "";
         // Show result phase
         setOwnBattle(prev2 => prev2 ? { ...prev2, phase: "result", taps: finalTaps, tier: tier, streak: newStreak } : null);
+        if (tierIdx >= 2) doShake();
         addLog("💥 " + tier.label + " " + opponent.name + " (" + finalTaps + " taps)" + streakLabel);
-        setParticles(p => [...p, ...mkParticles(50, 40, tier.color), ...mkParticles(48, 38, tier.color)]);
+        var particleScale = tierIdx >= 3 ? 1.8 : tierIdx >= 2 ? 1.4 : 1;
+        setParticles(p => [...p, ...mkParticles(50, 40, tier.color, particleScale), ...mkParticles(48, 38, tier.color, particleScale)]);
         float(tierIdx >= 3 ? "☢️" : tierIdx >= 2 ? "💀" : "💥");
         if (newStreak >= 3) {
           // Combo bonus
@@ -2455,10 +2420,9 @@ window.Kirkogotchi = function Kirkogotchi() {
           setOwnBattle(null);
           setAct(null);
           setMsg("");
+          ownTimerRef.current = null;
         }, 1800);
       }, 3000);
-      // Set act timeout longer to account for full own cycle
-      setTimeout(() => { if (!ownTimerRef.current) { setAct(null); setMsg(""); } }, 5500);
       return;
     }
 
@@ -2620,7 +2584,7 @@ window.Kirkogotchi = function Kirkogotchi() {
       }}>
         <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&display=swap" rel="stylesheet" />
         <div style={{ maxWidth: 360, width: "100%" }}>
-          <MemorialScreen pet={pet} stats={stats} onReset={reset} frame={frame} gender={pet.gender} />
+          <MemorialScreen pet={pet} stats={stats} onReset={reset} frame={frame} />
         </div>
       </div>
     );
@@ -2639,7 +2603,7 @@ window.Kirkogotchi = function Kirkogotchi() {
     else if (idleActivity.type === "doze") mood = "happy"; // startled awake
     else if (idleActivity.type === "phone") mood = "neutral";
   }
-  var fs = faceSlider;
+  var fs = 1.0;
   var dark = lightsOff;
   var displayMsg = msg || tapReaction || idleMsg;
   var critical = pet.alive && (pet.hunger < 10 || pet.happiness < 10 || pet.energy < 5);
@@ -2648,9 +2612,6 @@ window.Kirkogotchi = function Kirkogotchi() {
   var hour = new Date().getHours();
   var timeOfDay = hour >= 6 && hour < 12 ? "morning" : hour >= 12 && hour < 18 ? "day" : hour >= 18 && hour < 21 ? "evening" : "night";
   var timeTint = { morning: "#f5deb322", day: "transparent", evening: "#f59e0b15", night: "#1a1a4a22" }[timeOfDay];
-  var overallHealth = pet.alive ? Math.round((pet.hunger + pet.happiness + pet.energy + pet.clout) / 4) : 0;
-
-  // Merge OWN into tweet (20% chance of owning when tweeting)
   // KIRKIFY is now a button that just does the visual effect + bg change
 
   return (
@@ -2739,7 +2700,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                 /* ═══ SHARE HUB — all shareable content in one scrollable view ═══ */
                 <div style={{ maxHeight: 260, overflowY: "auto", overflowX: "hidden" }}>
                   {/* Kirkify gallery */}
-                  <div style={{ borderRadius: 8, overflow: "hidden", cursor: "pointer", marginBottom: 4 }} onClick={() => { setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length); sfxKirkify(); }}>
+                  <div style={{ borderRadius: 8, overflow: "hidden", cursor: "pointer", marginBottom: 4 }} onClick={() => { setKirkifyIdx(i => (i + 1) % KIRKIFY_TEMPLATES.length); sfxKirkify(); setStats(s => ({ ...s, kirkifies: (s.kirkifies || 0) + 1 })); }}>
                     {KIRKIFY_TEMPLATES[kirkifyIdx].render(fs, frame)}
                     <div style={{ background: "#0d2240", padding: "4px 0", textAlign: "center", display: "flex", justifyContent: "center", gap: 6 }}>
                       <button onClick={(e) => { e.stopPropagation(); shareToX("My Kirkie got Kirkified 👤\n\n" + KIRKIFY_TEMPLATES[kirkifyIdx].name + "\n\nMake your own 👇"); }}
@@ -2760,7 +2721,7 @@ window.Kirkogotchi = function Kirkogotchi() {
 
                   {/* Reaction stickers */}
                   <div style={{ background: "#1a3a6a11", borderRadius: 8, padding: 2 }}>
-                    <StickerPicker frame={frame} faceSize={fs} gender={pet.gender} />
+                    <StickerPicker frame={frame} faceSize={fs} />
                   </div>
                 </div>
               ) : view === "ach" ? (
@@ -2836,7 +2797,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                       )}
 
                       <g transform="translate(50, 40) scale(1.15)">
-                        <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} gender={pet.gender} blink={blinking} energy={pet.energy} hunger={pet.hunger} activity={idleActivity ? idleActivity.type : null} />
+                        <Kirk stage={stage} mood={act === "own" ? "angry" : mood} faceSize={fs} frame={frame} dark={dark} blink={blinking} energy={pet.energy} hunger={pet.hunger} activity={idleActivity ? idleActivity.type : null} />
                         {/* Held item */}
                         {holdingItem && (
                           <text x={12} y={-2} fontSize="8" opacity={0.9}>
@@ -3136,7 +3097,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                         padding: "5px 12px",
                         borderRadius: 10,
                         fontSize: 7, fontFamily: "'Press Start 2P',monospace",
-                        whiteSpace: "nowrap", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis",
+                        whiteSpace: "nowrap", maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis",
                         boxShadow: "0 3px 12px #0003",
                         border: "1.5px solid #1a3a6a33",
                         position: "relative",
@@ -3190,7 +3151,7 @@ window.Kirkogotchi = function Kirkogotchi() {
                       height: "100%", width: Math.max(0, val) + "%",
                       background: val < 20 ? "linear-gradient(90deg, #ef4444, #dc2626)" : "linear-gradient(90deg, " + color + "cc, " + color + ")",
                       borderRadius: 3,
-                      transition: "width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                      transition: "width 0.5s ease-out",
                       boxShadow: val < 20 ? "0 0 6px #ef444444" : "none",
                     }} />
                   </div>
@@ -3210,7 +3171,6 @@ window.Kirkogotchi = function Kirkogotchi() {
                   onClick={() => {
                     setView(k);
                     sfxTap();
-                    if (k === "meme") setDearIdx(Math.floor(Math.random() * DEAR_LIBS.length));
                   }}
                   style={{
                     background: view === k ? "#1a3a6a" : "#fff1",
