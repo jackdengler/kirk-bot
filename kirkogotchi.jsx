@@ -711,20 +711,22 @@ function DearLib({ data, fs }) {
 // Tap them before they shoot. Dark humor tribute.
 
 const BUILDINGS = [
-  { x: 5, w: 35, h: 55, floors: 3, color: "#8a7a6a" },
-  { x: 45, w: 30, h: 70, floors: 4, color: "#7a6a5a" },
-  { x: 80, w: 25, h: 45, floors: 2, color: "#9a8a7a" },
-  { x: 110, w: 40, h: 60, floors: 3, color: "#6a6a6a" },
-  { x: 155, w: 30, h: 50, floors: 3, color: "#8a7a6a" },
+  { x: 2, w: 32, h: 50, floors: 3, color: "#7a6a5a" },
+  { x: 38, w: 28, h: 65, floors: 4, color: "#6a5a4a" },
+  { x: 70, w: 24, h: 42, floors: 2, color: "#8a7a6a" },
+  { x: 98, w: 35, h: 55, floors: 3, color: "#6a6a6a" },
+  { x: 138, w: 30, h: 48, floors: 3, color: "#7a6a5a" },
+  { x: 172, w: 28, h: 58, floors: 3, color: "#8a7a6a" },
 ];
 
-// Sniper spawn positions — rooftop edges
+// Sniper spawn positions — rooftop edges, carefully placed
 const SNIPER_SPOTS = [
-  { x: 15, y: 42 }, { x: 30, y: 42 }, // building 1 roof
-  { x: 52, y: 27 }, { x: 68, y: 27 }, // building 2 roof
-  { x: 88, y: 52 }, { x: 100, y: 52 }, // building 3 roof
-  { x: 120, y: 37 }, { x: 140, y: 37 }, // building 4 roof
-  { x: 162, y: 47 }, { x: 178, y: 47 }, // building 5 roof
+  { x: 12, y: 47 }, { x: 28, y: 47 },
+  { x: 45, y: 32 }, { x: 60, y: 32 },
+  { x: 78, y: 55 }, { x: 90, y: 55 },
+  { x: 108, y: 42 }, { x: 126, y: 42 },
+  { x: 148, y: 49 }, { x: 162, y: 49 },
+  { x: 180, y: 39 }, { x: 192, y: 39 },
 ];
 
 function SniperGame({ onDone }) {
@@ -760,9 +762,9 @@ function SniperGame({ onDone }) {
       fc.current++;
       const elapsed = 20 - t;
 
-      // Spawn snipers — ramps up
-      const spawnChance = 0.03 + elapsed * 0.005;
-      if (Math.random() < spawnChance && snipers.length < 4) {
+      // Spawn snipers — gentle start, ramps up
+      const spawnChance = elapsed < 3 ? 0.01 : 0.02 + elapsed * 0.004;
+      if (Math.random() < spawnChance && snipers.length < (elapsed < 5 ? 2 : elapsed < 10 ? 3 : 4)) {
         const spot = SNIPER_SPOTS[Math.floor(Math.random() * SNIPER_SPOTS.length)];
         // Don't spawn on occupied spots
         const occupied = snipers.some(s => Math.abs(s.x - spot.x) < 10 && Math.abs(s.y - spot.y) < 10);
@@ -771,7 +773,7 @@ function SniperGame({ onDone }) {
             id: Math.random(),
             x: spot.x + (Math.random() - 0.5) * 6,
             y: spot.y - 2 - Math.random() * 4,
-            timer: 80 - Math.min(elapsed * 2, 40), // frames until they shoot (gets faster)
+            timer: 100 - Math.min(elapsed * 3, 50), // frames until they shoot (starts slow, gets faster)
             phase: 0, // 0=glint, increases each frame
           }]);
         }
@@ -855,8 +857,13 @@ function SniperGame({ onDone }) {
         {/* TPUSA banner */}
         <text x="100" y="106" fontSize="3" fontFamily="'Press Start 2P',monospace" fill="#fff" textAnchor="middle">TPUSA</text>
 
-        {/* UVU text on biggest building */}
-        <text x="60" y="40" fontSize="6" fontFamily="'Bangers',cursive" fill="#fff8" textAnchor="middle" letterSpacing="2">UVU</text>
+        {/* Kirk on stage — the one you're protecting */}
+        <g transform="translate(100, 96)">
+          <Kirk stage="adult" mood="happy" faceSize={1} frame={fc.current % 4} scale={0.18} />
+        </g>
+
+        {/* UVU text on building */}
+        <text x="52" y="42" fontSize="5" fontFamily="'Bangers',cursive" fill="#fff6" textAnchor="middle" letterSpacing="2">UVU</text>
 
         {/* Snipers — appear as glints, then silhouettes */}
         {snipers.map(s => {
@@ -880,20 +887,26 @@ function SniperGame({ onDone }) {
                   <line x1={s.x + 2} y1={s.y} x2={s.x + 7} y2={s.y + 1} stroke="#333" strokeWidth="1" />
                 </g>
               )}
-              {/* WARNING — when about to shoot */}
-              {danger > 0.8 && (
-                <text x={s.x} y={s.y - 10} fontSize="4" fontFamily="'Bangers',cursive" fill="#ef4444" textAnchor="middle" opacity={fc.current % 4 < 2 ? 1 : 0.3}>⚠️</text>
+              {/* WARNING — red pulsing ring when about to shoot */}
+              {danger > 0.7 && (
+                <circle cx={s.x} cy={s.y} r={6 + (fc.current % 3)} fill="none" stroke="#ef4444" strokeWidth="0.8" opacity={fc.current % 4 < 2 ? 0.8 : 0.3} />
               )}
             </g>
           ) : null;
         })}
 
-        {/* Muzzle flash */}
+        {/* Muzzle flash + bullet trail */}
         {muzzleFlash && (
-          <circle cx={muzzleFlash.x} cy={muzzleFlash.y} r="6" fill="#ff0" opacity="0.8">
-            <animate attributeName="r" from="3" to="8" dur="0.15s" fill="freeze" />
-            <animate attributeName="opacity" from="1" to="0" dur="0.2s" fill="freeze" />
-          </circle>
+          <g>
+            <circle cx={muzzleFlash.x} cy={muzzleFlash.y} r="5" fill="#ff0" opacity="0.9">
+              <animate attributeName="r" from="2" to="7" dur="0.15s" fill="freeze" />
+              <animate attributeName="opacity" from="1" to="0" dur="0.2s" fill="freeze" />
+            </circle>
+            {/* Bullet trail to Kirk */}
+            <line x1={muzzleFlash.x} y1={muzzleFlash.y} x2={100} y2={96} stroke="#ff0" strokeWidth="0.8" opacity="0.6">
+              <animate attributeName="opacity" from="0.8" to="0" dur="0.25s" fill="freeze" />
+            </line>
+          </g>
         )}
 
         {/* Shot flash — red overlay */}
@@ -2683,20 +2696,21 @@ function StartScreen({ onCreate }) {
       <style>{`@keyframes glow{0%,100%{box-shadow:0 8px 32px #0008,0 0 0 2px #8b1525,0 0 16px #c41e3a18}50%{box-shadow:0 8px 32px #0008,0 0 0 2px #8b1525,0 0 28px #c41e3a33}}.shell{animation:glow 2.8s ease-in-out infinite}`}</style>
 
       <div className="shell" style={{
-        background: "linear-gradient(165deg, #e8e8e8 0%, #c41e3a 35%, #1a3a6a 85%)",
-        borderRadius: "28px 28px 42px 42px",
-        padding: 4,
-        maxWidth: 360,
+        background: "#0d2240",
+        borderRadius: 16,
+        maxWidth: 380,
         width: "100%",
+        overflow: "hidden",
+        border: "1px solid #ffffff15",
       }}>
         <div style={{
-          background: "linear-gradient(168deg, #d4d4d4 0%, #c41e3a 25%, #1a3a6a 80%)",
-          borderRadius: "24px 24px 38px 38px",
-          padding: "16px 12px 22px",
+          background: "linear-gradient(135deg, #c41e3a, #8b1525)",
+          padding: "10px 0",
           textAlign: "center",
         }}>
-          <div style={{ fontSize: 28, color: "#fff", letterSpacing: 3, textShadow: "0 3px 10px #0008, 0 0 15px #c41e3a55", marginBottom: 8 }}>KIRKOGOTCHI</div>
-
+          <div style={{ fontSize: 28, color: "#fff", letterSpacing: 3, textShadow: "0 2px 8px #0005" }}>KIRKOGOTCHI</div>
+        </div>
+        <div style={{ padding: "12px 12px 16px", textAlign: "center" }}>
           <div style={{ background: "#0a0a0a", borderRadius: 10, padding: 4, boxShadow: "inset 0 2px 8px #000a" }}>
             <div style={{ background: "#dce8f5", borderRadius: 7, padding: "18px 10px 10px" }}>
               <svg viewBox="0 0 100 80" style={{ width: 160, display: "block", margin: "0 auto" }}>
